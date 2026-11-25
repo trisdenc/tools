@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNES Studio</title>
+  <meta name="description" content="Compose SNES music and sound effects in your browser with an accurate S-DSP engine: BRR samples, Gaussian interpolation, ADSR/GAIN envelopes, echo with FIR, pitch modulation and noise.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a class="back" href="../" title="All tools">←</a>
+      <strong>SNES Studio</strong>
+      <input id="title" class="title-input" aria-label="Project title" spellcheck="false">
+    </div>
+
+    <div class="transport" role="group" aria-label="Transport">
+      <button id="playSong" class="tbtn primary" title="Play song from the selected order (Space)">▶ Song</button>
+      <button id="playPattern" class="tbtn" title="Loop the pattern being edited (Shift+Space)">▶ Pattern</button>
+      <button id="stop" class="tbtn" title="Stop (Space)">■</button>
+      <label class="num" title="Tempo (ProTracker style: 125 BPM at 6 ticks/row = 4 rows per beat)">BPM <input id="bpm" type="number" min="32" max="400"></label>
+      <label class="num" title="Ticks per row (speed). Effects update once per tick.">Speed <input id="tpr" type="number" min="1" max="31"></label>
+      <span class="pos" id="pos">Stopped</span>
+    </div>
+
+    <div class="aram" id="aram" title="Simulated 64 KB audio RAM">
+      <div class="aram-bar" id="aramBar"></div>
+      <div class="aram-info"><span id="aramText"></span>
+        <label class="mini"><input type="checkbox" id="strict"> Strict 64 KB</label>
+      </div>
+    </div>
+
+    <div class="tools">
+      <div class="oct" title="Keyboard octave ( [ and ] )">
+        <button id="octDown" class="tbtn small" aria-label="Octave down">−</button>
+        <span id="octave">Oct 4</span>
+        <button id="octUp" class="tbtn small" aria-label="Octave up">+</button>
+      </div>
+      <button id="editMode" class="tbtn toggle" aria-pressed="false" title="Record notes into the tracker from the keyboard (Esc)">● Edit</button>
+      <button id="undo" class="tbtn small" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+      <button id="redo" class="tbtn small" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
+      <details class="menu" id="fileMenu">
+        <summary class="tbtn">File ▾</summary>
+        <div class="menu-list">
+          <button data-act="new">New empty project</button>
+          <button data-act="demo">New from demo song</button>
+          <button data-act="open">Open project… (.snesproj / .json)</button>
+          <hr>
+          <button data-act="save">Save project (.snesproj)</button>
+          <button data-act="json">Export project JSON</button>
+          <hr>
+          <button data-act="wav">Export song as WAV…</button>
+          <button data-act="stems">Export channel stems (.zip)</button>
+          <button data-act="sfxpack">Export SFX pack (.zip)</button>
+          <hr>
+          <button data-act="midi">Connect MIDI keyboard</button>
+          <button data-act="help">Keyboard shortcuts</button>
+        </div>
+      </details>
+      <input type="file" id="openFile" accept=".snesproj,.zip,.json" hidden>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="song">Song</button>
+    <button role="tab" data-tab="instruments">Instruments</button>
+    <button role="tab" data-tab="samples">Samples (BRR)</button>
+    <button role="tab" data-tab="mixer">Mixer &amp; Echo</button>
+    <button role="tab" data-tab="sfx">Sound Effects</button>
+    <span class="hint" id="audioHint">Click anywhere to turn on sound</span>
+  </nav>
+
+  <main id="view"></main>
+
+  <dialog id="wavDialog">
+    <form method="dialog" class="dlg">
+      <h3>Export song as WAV</h3>
+      <label>Sample rate
+        <select id="wavRate">
+          <option value="32000">32,000 Hz (native S-DSP rate)</option>
+          <option value="44100">44,100 Hz</option>
+          <option value="48000">48,000 Hz</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="wavLoop" checked> Seamless loop (adds loop points to the file for game engines)</label>
+      <p class="muted small">With looping on, the file holds the intro once and then one pass of the loop section, captured on its second time through so echo and release tails wrap around cleanly. Without it, you get one pass plus the fade-out tail.</p>
+      <div class="dlg-actions">
+        <button value="cancel" class="tbtn">Cancel</button>
+        <button value="ok" class="tbtn primary">Export</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog">
+    <form method="dialog" class="dlg">
+      <h3>Keyboard shortcuts</h3>
+      <table class="keys">
+        <tr><td><kbd>Z</kbd>–<kbd>/</kbd>, <kbd>Q</kbd>–<kbd>P</kbd></td><td>Play notes (two octaves, like a tracker)</td></tr>
+        <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Octave down / up</td></tr>
+        <tr><td><kbd>Space</kbd></td><td>Play song / stop</td></tr>
+        <tr><td><kbd>Shift</kbd>+<kbd>Space</kbd></td><td>Loop the current pattern</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Toggle edit (record) mode</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></td><td>Undo / redo</td></tr>
+        <tr><th colspan="2">Tracker (click the grid first)</th></tr>
+        <tr><td>Arrows, <kbd>Tab</kbd>, <kbd>PgUp</kbd>/<kbd>PgDn</kbd></td><td>Move the cursor</td></tr>
+        <tr><td><kbd>1</kbd> or <kbd>`</kbd></td><td>Note off (in the note column)</td></tr>
+        <tr><td><kbd>0</kbd>–<kbd>9</kbd>, <kbd>A</kbd>–<kbd>F</kbd></td><td>Type instrument, volume and effect values</td></tr>
+        <tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>Clear field / clear the whole cell</td></tr>
+        <tr><th colspan="2">Piano roll</th></tr>
+        <tr><td>Click / drag</td><td>Add a note / move it, drag its right edge to resize</td></tr>
+        <tr><td>Right-click</td><td>Delete a note</td></tr>
+        <tr><td>Wheel, <kbd>Shift</kbd>+wheel, <kbd>Ctrl</kbd>+wheel</td><td>Scroll pitch, scroll time, zoom</td></tr>
+      </table>
+      <div class="dlg-actions"><button value="ok" class="tbtn primary">Close</button></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/ui/app.js"></script>
+</body>
+</html>
