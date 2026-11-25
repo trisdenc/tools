@@ -27,15 +27,18 @@ Everything under [`hirom/`](hirom/) is the HiROM Studio suite of SNES tools:
 | `hirom/sound/` | HiROM Sound. Plain ES modules, no build step. Tests: `cd hirom/sound && node --test` |
 | `hirom/pixel/` | HiROM Pixel, **build output only** (don't edit by hand) |
 | `hirom/_pixel-source/` | HiROM Pixel source (Vite + React + TypeScript). Not published: GitHub Pages skips folders starting with `_` |
+| `hirom/map/` | HiROM Map, **build output only** |
+| `hirom/_map-source/` | HiROM Map source. Imports HiROM Pixel's renderer and model from `../_pixel-source/src` |
 
-To work on HiROM Pixel:
+To work on HiROM Pixel or HiROM Map (same commands in `hirom/_map-source`):
 
 ```sh
 cd hirom/_pixel-source
 npm install
 npm run dev     # local dev server
 npm test        # unit tests
-npm run build   # type-checks and rebuilds ../pixel
+npm run build   # type-checks and rebuilds ../pixel (or ../map)
 ```
 
-Then commit both `hirom/_pixel-source/` and `hirom/pixel/`.
+Then commit the source folder and its build output. HiROM Map uses HiROM Pixel's code, so after
+changing Pixel's renderer or project model, rebuild Map too.

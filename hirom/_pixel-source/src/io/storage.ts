@@ -28,6 +28,17 @@ async function run<T>(name: string, mode: IDBTransactionMode, fn: (s: IDBObjectS
 
 export const idbSet = (key: string, value: unknown) => run(DB_NAME, 'readwrite', (s) => s.put(value, key));
 
+/** Tell the other HiROM Studio apps (e.g. HiROM Map's live link, in another tab) that the autosave changed. */
+export function announceSaved(): void {
+  try {
+    const ch = new BroadcastChannel('hirom-studio');
+    ch.postMessage({ app: 'pixel', type: 'saved' });
+    ch.close();
+  } catch {
+    // BroadcastChannel unavailable: HiROM Map refreshes when its tab is focused instead.
+  }
+}
+
 export async function idbGet<T>(key: string): Promise<T | undefined> {
   const v = await run<T | undefined>(DB_NAME, 'readonly', (s) => s.get(key));
   if (v !== undefined) return v;

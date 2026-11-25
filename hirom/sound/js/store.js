@@ -327,6 +327,14 @@ export async function saveNow() {
     dirtySources.clear();
     saveStatus.lastSaved = Date.now();
     saveStatus.error = null;
+    // Let HiROM Map (another tab) know, so its music links pick up the new version.
+    try {
+      const ch = new BroadcastChannel("hirom-studio");
+      ch.postMessage({ app: "sound", type: "saved" });
+      ch.close();
+    } catch {
+      // BroadcastChannel unavailable: Map refreshes when its tab is focused instead.
+    }
   } catch (e) {
     saveStatus.error = String(e.message || e);
   }

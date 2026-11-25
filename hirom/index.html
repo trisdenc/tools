@@ -113,7 +113,7 @@
     section.apps { padding: 44px 0 20px; }
 
     /* ---------- Cartridges ---------- */
-    .carts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
+    .carts { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 24px; }
     .cart-wrap { filter: drop-shadow(6px 6px 0 var(--gray-3)); transition: transform .12s steps(2); }
     .cart-wrap:hover, .cart-wrap:focus-within { transform: translateY(-4px); }
     .cart {
@@ -216,7 +216,7 @@
       <div class="slot"><img src="brand/mark.svg" alt=""></div>
       <div>
         <h1 class="display">HiROM<br><span class="sub">STUDIO</span></h1>
-        <p>Make SNES music, sound and pixel art in your browser, inside the same limits the real hardware had.</p>
+        <p>Make SNES music, pixel art and levels in your browser, inside the same limits the real hardware had.</p>
         <a class="press" href="#apps"><span class="blink">▶</span> PRESS START</a>
       </div>
     </div>
@@ -284,20 +284,47 @@
             </div>
           </article>
         </div>
+
+        <div class="cart-wrap">
+          <article class="cart">
+            <div class="label">
+              <img src="brand/map.svg" alt="">
+              <div>
+                <span class="hirom-suite">HiROM Studio</span>
+                <h3><span class="cursor" aria-hidden="true">▶</span>HiROM MAP</h3>
+              </div>
+            </div>
+            <div class="manual">
+              <p>Build stages and worlds from your HiROM Pixel tiles, then play them with your HiROM Sound music.</p>
+              <ul>
+                <li>Multi-layer Mode 1 levels on the same renderer as HiROM Pixel</li>
+                <li>16×16 and 32×32 metatiles with built-in collision</li>
+                <li>47-tile blob and 16-tile Wang autotiling</li>
+                <li>Solid, one-way, ladders, water, hazards, slopes and materials</li>
+                <li>Entities with templates, properties and patrol paths</li>
+                <li>Camera-lock, music and trigger zones</li>
+                <li>Parallax and HDMA bands, with live playtest and music</li>
+                <li>Screen VRAM/OAM checker; Tiled, SNES binary and PNG export</li>
+              </ul>
+              <a class="start" href="map/">START HiROM MAP</a>
+            </div>
+          </article>
+        </div>
       </div>
       <p class="soon">MORE CARTRIDGES COMING SOON…</p>
 
       <div class="dialog" role="note">
         <span class="speaker">HiROM STUDIO</span>
         <p>Every app runs entirely in your browser. Your projects save on this device, and you can save them as files any time.</p>
-        <p>Everything is built around the real chips: the S-DSP for sound and the S-PPU for graphics, palettes and memory budgets included.<span class="more" aria-hidden="true">▼</span></p>
+        <p>Everything is built around the real chips: the S-DSP for sound and the S-PPU for graphics, palettes and memory budgets included.</p>
+        <p>The apps link up: draw a tile in HiROM Pixel and every HiROM Map level using it updates, and levels play your HiROM Sound music.<span class="more" aria-hidden="true">▼</span></p>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="wrap">
-      <span>HiROM Studio · HiROM Sound · HiROM Pixel</span>
+      <span>HiROM Studio · HiROM Sound · HiROM Pixel · HiROM Map</span>
       <span>An independent homage to 16-bit consoles. Not affiliated with or endorsed by Nintendo.</span>
     </div>
   </footer>

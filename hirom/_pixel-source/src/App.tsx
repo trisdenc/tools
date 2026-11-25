@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Editor, PIXEL_TOOLS, SCENE_TOOLS } from './core/editor';
 import { exportProject } from './io/exporters';
 import { parseProject, serializeProject } from './io/project';
-import { idbGet, idbSet } from './io/storage';
+import { announceSaved, idbGet, idbSet } from './io/storage';
 import { AssetKind, AssetsPanel } from './ui/AssetsPanel';
 import { CanvasView } from './ui/CanvasView';
 import { NewDocDialog } from './ui/NewDocDialog';
@@ -31,7 +31,9 @@ function useAutosave(editor: Editor) {
       const key = keyOf();
       if (key === savedKey) return;
       savedKey = key;
-      idbSet(AUTOSAVE_KEY, serializeProject(editor.project)).catch((e) => console.warn('Autosave failed', e));
+      idbSet(AUTOSAVE_KEY, serializeProject(editor.project))
+        .then(announceSaved)
+        .catch((e) => console.warn('Autosave failed', e));
     };
 
     idbGet(AUTOSAVE_KEY)
