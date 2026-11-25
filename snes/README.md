@@ -1,6 +1,6 @@
-# SNES Studio
+# HiROM Sound
 
-A browser DAW for writing SNES-style music and sound effects that sound like the
+Part of the **HiROM Studio** suite. A browser DAW for writing SNES-style music and sound effects that sound like the
 real S-DSP, not a generic chiptune sampler. Live at `/tools/snes/`.
 
 ## What's accurate
