@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Tools</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+      --border: #e3e3e0; --accent: #2f6fde; --chip: #eef1f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141416; --card: #1d1d20; --text: #ececee; --muted: #9a9aa2;
+        --border: #2c2c31; --accent: #6b9bff; --chip: #26272d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 1040px; margin: 0 auto; padding: 40px 16px 64px; }
+    header h1 { margin: 0 0 4px; font-size: 1.9rem; letter-spacing: -0.02em; }
+    header p { margin: 0 0 24px; color: var(--muted); }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+    #search {
+      flex: 1 1 260px; padding: 10px 14px; font: inherit; color: var(--text);
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    }
+    #search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filters button {
+      font: inherit; font-size: 0.9rem; padding: 8px 14px; cursor: pointer;
+      background: var(--chip); color: var(--text); border: 1px solid transparent; border-radius: 999px;
+    }
+    .filters button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    section { margin-bottom: 32px; }
+    section h2 {
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin: 0 0 12px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    a.card {
+      display: flex; gap: 12px; align-items: flex-start; padding: 14px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      color: inherit; text-decoration: none; transition: border-color .15s, transform .15s;
+    }
+    a.card:hover, a.card:focus-visible { border-color: var(--accent); transform: translateY(-1px); outline: none; }
+    a.card img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; }
+    .card strong { display: block; font-weight: 600; }
+    .card span { display: block; color: var(--muted); font-size: 0.9rem; }
+    .empty { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>My Tools</h1>
+      <p>The tools I use regularly. Press <kbd>/</kbd> to search.</p>
+    </header>
+    <div class="controls">
+      <input id="search" type="search" placeholder="Search tools…" aria-label="Search tools">
+      <div class="filters" id="filters"></div>
+    </div>
+    <div id="list"></div>
+  </main>
+  <script src="tools.js"></script>
+  <script>
+    const list = document.getElementById("list");
+    const search = document.getElementById("search");
+    const filters = document.getElementById("filters");
+    const categories = ["All", ...new Set(TOOLS.map(t => t.category))];
+    let active = "All";
+
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const favicon = url => { try { return `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url).hostname}`; } catch { return ""; } };
+
+    function renderFilters() {
+      filters.innerHTML = categories.map(c =>
+        `<button type="button" aria-pressed="${c === active}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+    }
+
+    function render() {
+      const q = search.value.trim().toLowerCase();
+      const matches = TOOLS.filter(t =>
+        (active === "All" || t.category === active) &&
+        [t.name, t.description, t.category, ...(t.tags || [])].join(" ").toLowerCase().includes(q));
+      if (!matches.length) { list.innerHTML = `<p class="empty">No tools match.</p>`; return; }
+      const groups = {};
+      matches.forEach(t => (groups[t.category] ||= []).push(t));
+      list.innerHTML = Object.entries(groups).map(([cat, tools]) => `
+        <section>
+          <h2>${esc(cat)}</h2>
+          <div class="grid">
+            ${tools.map(t => `
+              <a class="card" href="${esc(t.url)}" target="_blank" rel="noopener">
+                <img src="${favicon(t.url)}" alt="" loading="lazy">
+                <div><strong>${esc(t.name)}</strong><span>${esc(t.description)}</span></div>
+              </a>`).join("")}
+          </div>
+        </section>`).join("");
+    }
+
+    filters.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      active = b.dataset.cat; renderFilters(); render();
+    });
+    search.addEventListener("input", render);
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+    });
+    renderFilters(); render();
+  </script>
+</body>
+</html>
