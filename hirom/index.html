@@ -42,6 +42,7 @@
       background: var(--accent); color: var(--accent-text); text-decoration: none; font-weight: 600;
     }
     .open:hover { filter: brightness(1.08); }
+    .app + .app { margin-top: 14px; }
     .soon { margin-top: 16px; color: var(--muted); font-size: .95rem; }
     footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
     @media (max-width: 560px) {
@@ -86,6 +87,25 @@
           <li>WAV export with loop points, stems and SFX packs</li>
         </ul>
         <a class="open" href="sound/">Open HiROM Sound →</a>
+      </div>
+    </article>
+
+    <article class="app">
+      <img src="brand/pixel.svg" alt="">
+      <div>
+        <h3 class="hirom-word">HiROM <span class="sub">Pixel</span></h3>
+        <p class="lede">Draw sprites, tiles and whole scenes inside the real limits of the S-PPU graphics chip.</p>
+        <ul class="features">
+          <li>True indexed color with 15-bit BGR555 CGRAM</li>
+          <li>16 × 16 sub-palettes, 2/4/8bpp art</li>
+          <li>Pixel-perfect pencil, shapes, fill and dither brushes</li>
+          <li>Tilesets and BG1–BG3 tilemaps</li>
+          <li>Scene composer with main/sub screens, color math and parallax</li>
+          <li>Animated sprites and palette cycling at 60 Hz</li>
+          <li>Live 64 KB VRAM budget</li>
+          <li>PNG, indexed PNG, .pal, spritesheet and Tiled map export</li>
+        </ul>
+        <a class="open" href="pixel/">Open HiROM Pixel →</a>
       </div>
     </article>
     <p class="soon">More HiROM Studio apps are on the way.</p>
