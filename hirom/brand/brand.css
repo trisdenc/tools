@@ -1,31 +1,60 @@
-/* HiROM Studio brand: shared by every HiROM app. Load after the app's own stylesheet. */
+/* HiROM Studio brand kit, shared by every HiROM page and app.
+   Apps: load this BEFORE the app stylesheet so the app's own tokens win where it needs them. */
+
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("fonts/press-start-2p-latin.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "DotGothic16";
+  src: url("fonts/dotgothic16-latin.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
-  --brand: #6c47ff;
-  --brand-strong: #4f24d8;
-  --accent: #6c47ff;
+  /* SNES-inspired palette (fixed in both light and dark mode) */
+  --hirom-console: #d5d3dc;       /* console body */
+  --hirom-console-2: #c2c0cb;     /* raised panels */
+  --hirom-console-3: #a3a0ae;     /* recesses, ridges */
+  --hirom-console-dark: #55535f;  /* controller ports, trim */
+  --hirom-ink: #25232c;           /* text on console gray */
+  --hirom-purple: #4b3a9c;        /* A / B buttons */
+  --hirom-purple-2: #5b48c2;
+  --hirom-lavender: #b3a9ef;      /* X / Y buttons */
+  --hirom-led: #e23a3f;           /* power light */
+  --hirom-display: "Press Start 2P", ui-monospace, monospace;
+  --hirom-text: "DotGothic16", system-ui, sans-serif;
+
+  /* Brand accent for app UIs (follows light/dark) */
+  --brand: #5b48c2;
+  --brand-strong: #4b3a9c;
+  --accent: #5b48c2;
   --accent-text: #ffffff;
-  --hl: #f1edff;
-  --cursor: rgba(108, 71, 255, .16);
+  --hl: #ece9fb;
+  --cursor: rgba(91, 72, 194, .16);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --brand: #a28cff;
-    --brand-strong: #8c6dff;
-    --accent: #a28cff;
-    --accent-text: #150e33;
-    --hl: #231d3f;
-    --cursor: rgba(162, 140, 255, .22);
+    --brand: #b3a9ef;
+    --brand-strong: #8f82e6;
+    --accent: #b3a9ef;
+    --accent-text: #17123a;
+    --hl: #24203f;
+    --cursor: rgba(179, 169, 239, .2);
   }
 }
 
+/* Header lockup: chip icon, small "HIROM STUDIO" label, then "HiROM <App>" */
 .hirom-lockup {
-  display: inline-flex; align-items: center; gap: 9px;
-  color: inherit; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+  color: inherit; text-decoration: none; white-space: nowrap;
 }
 .hirom-lockup img { width: 28px; height: 28px; display: block; flex: none; }
-.hirom-lockup .names { display: flex; flex-direction: column; line-height: 1.05; }
-.hirom-lockup .suite {
-  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
+.hirom-lockup .names { display: flex; flex-direction: column; gap: 4px; line-height: 1; }
+.hirom-suite {
+  font: 8px/1 var(--hirom-display);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--muted, #8a8794);
 }
-.hirom-word { font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
-.hirom-word .sub { font-weight: 600; color: var(--brand); }
+.hirom-word { font: 10px/1.2 var(--hirom-display); letter-spacing: 0; }
+.hirom-word .sub { color: var(--brand); }

@@ -1,17 +1,18 @@
 :root {
   --bg: #f4f4f1; --card: #ffffff; --panel: #fafaf8; --text: #1d1d1f; --muted: #6b6b70;
-  --border: #e0e0dc; --accent: #2f6fde; --accent-text: #ffffff; --chip: #eceff4; --warn: #b4560b; --bad: #c92a2a; --good: #1d7a46;
+  --border: #e0e0dc; --chip: #eceff4; --warn: #b4560b; --bad: #c92a2a; --good: #1d7a46;
   --grid: #ececea; --grid-strong: #d6d6d2; --key-white: #ffffff; --key-black: #2a2a2e;
-  --cursor: rgba(47, 111, 222, .18); --playhead: #e5484d; --hl: #eaf1fd;
+  --playhead: #e5484d;
+  /* --accent, --accent-text, --hl and --cursor come from the HiROM brand kit */
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #111113; --card: #1b1b1f; --panel: #17171a; --text: #ececee; --muted: #9a9aa2;
-    --border: #2c2c32; --accent: #6b9bff; --accent-text: #0d1220; --chip: #26272d; --warn: #f0a050; --bad: #ff6b6b; --good: #4cc584;
+    --border: #2c2c32; --chip: #26272d; --warn: #f0a050; --bad: #ff6b6b; --good: #4cc584;
     --grid: #1f1f24; --grid-strong: #2e2e35; --key-white: #d9d9de; --key-black: #26262b;
-    --cursor: rgba(107, 155, 255, .22); --playhead: #ff6b6b; --hl: #1f2a40;
+    --playhead: #ff6b6b;
     color-scheme: dark;
   }
 }
@@ -41,8 +42,7 @@ h3 { margin: 0 0 12px; font-size: 1.05rem; }
 .brand .hirom-lockup { padding: 3px 6px 3px 2px; border-radius: 8px; }
 .brand .hirom-lockup:hover { background: var(--chip); }
 .about-head { display: flex; gap: 14px; align-items: center; }
-.about-head h3 { margin: 2px 0; font-size: 1.4rem; }
-.about .suite-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+.about-head h3 { margin: 8px 0 6px; font-size: 1.5rem; }
 .about p { margin: 0; }
 .dlg-actions a.tbtn { text-decoration: none; color: inherit; }
 .title-input { width: 150px; border: 1px solid transparent; background: transparent; padding: 4px 6px; border-radius: 6px; color: var(--muted); }

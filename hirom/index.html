@@ -4,115 +4,302 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HiROM Studio</title>
-  <meta name="description" content="HiROM Studio: hardware-accurate tools for making SNES music and games in your browser.">
+  <meta name="description" content="HiROM Studio: hardware-accurate tools for making SNES music, art and games in your browser.">
+  <meta name="theme-color" content="#d5d3dc">
   <link rel="icon" href="brand/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="brand/brand.css">
   <style>
+    /* This page is a 16-bit homage: one fixed console palette in light and dark mode. */
     :root {
-      --bg: #f6f5f9; --card: #ffffff; --text: #1b1a22; --muted: #6a6878; --border: #e3e0ec; --chip: #efedf6;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #100f16; --card: #1a1922; --text: #edecf3; --muted: #9c99ab; --border: #2b2937; --chip: #252331; }
+      color-scheme: light;
+      --gray: var(--hirom-console);
+      --gray-2: var(--hirom-console-2);
+      --gray-3: var(--hirom-console-3);
+      --trim: var(--hirom-console-dark);
+      --ink: var(--hirom-ink);
+      --muted: #55535f;
+      --purple: var(--hirom-purple);
+      --purple-dark: #2f2470;
+      --lavender: var(--hirom-lavender);
+      --led: var(--hirom-led);
+      --px: 4px;
+      --notch: polygon(0 var(--px), var(--px) var(--px), var(--px) 0, calc(100% - var(--px)) 0, calc(100% - var(--px)) var(--px), 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)));
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0; color: var(--ink);
+      font: 20px/1.5 var(--hirom-text);
+
+      background-color: var(--gray);
+      /* faint 2×2 dither, like a console's molded plastic */
+      background-image: repeating-conic-gradient(rgb(0 0 0 / .035) 0 25%, transparent 0 50%);
+      background-size: 4px 4px;
     }
-    main { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; }
-    .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
-    .back:hover { color: var(--brand); }
-    .hero { padding: 56px 0 40px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-    .hero img { width: 84px; height: 84px; }
-    .hero h1 { margin: 0; font-size: clamp(2.2rem, 6vw, 3.2rem); line-height: 1.05; }
-    .hero p { margin: 8px 0 0; color: var(--muted); font-size: 1.1rem; max-width: 560px; }
-    h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0 0 12px; }
-    .app {
-      display: grid; grid-template-columns: auto 1fr; gap: 18px 22px; align-items: start;
-      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px;
+    a { color: inherit; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+    .display { font-family: var(--hirom-display); font-weight: 400; letter-spacing: .02em; }
+    :focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+
+    /* ---------- Console top ---------- */
+    .console-top {
+      background: var(--gray-2);
+      border-bottom: 4px solid var(--gray-3);
+      box-shadow: inset 0 -2px 0 rgb(255 255 255 / .35);
     }
-    .app > img { width: 64px; height: 64px; }
-    .app h3 { margin: 0; font-size: 1.5rem; }
-    .app .lede { margin: 4px 0 14px; color: var(--muted); }
-    .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 18px; padding: 0; margin: 0 0 20px; list-style: none; }
-    .features li { padding-left: 18px; position: relative; font-size: .95rem; }
-    .features li::before { content: ""; position: absolute; left: 0; top: .55em; width: 8px; height: 8px; background: var(--brand); border-radius: 2px; }
-    .open {
-      display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
-      background: var(--accent); color: var(--accent-text); text-decoration: none; font-weight: 600;
+    .console-top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+    .console-top .hirom-lockup { padding: 6px 8px 6px 4px; }
+    .console-top .hirom-suite { color: var(--muted); }
+    .console-top .hirom-word .sub { color: var(--purple); }
+    .switches { display: flex; align-items: center; gap: 18px; }
+    .power { display: flex; align-items: center; gap: 8px; font: 8px/1 var(--hirom-display); color: var(--muted); }
+    .led {
+      width: 10px; height: 10px; background: var(--led);
+      box-shadow: 0 0 0 2px var(--trim), 0 0 10px 2px rgb(226 58 63 / .7);
     }
-    .open:hover { filter: brightness(1.08); }
-    .app + .app { margin-top: 14px; }
-    .soon { margin-top: 16px; color: var(--muted); font-size: .95rem; }
-    footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
-    @media (max-width: 560px) {
-      .app { grid-template-columns: 1fr; }
-      .hero { padding-top: 32px; }
+    .slider-btn {
+      display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+      font: 9px/1 var(--hirom-display); color: var(--ink);
+      background: var(--gray); padding: 10px 12px;
+      clip-path: var(--notch);
+      box-shadow: inset -3px -3px 0 var(--gray-3), inset 3px 3px 0 rgb(255 255 255 / .7);
+    }
+    .slider-btn:hover { background: #e2e0e8; }
+    .slider-btn { white-space: nowrap; }
+
+    /* ---------- Hero ---------- */
+    .hero { position: relative; padding: 56px 0 44px; overflow: hidden; }
+    .hero::after {
+      /* subtle CRT scanlines */
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .035) 0 1px, transparent 1px 3px);
+    }
+    .hero .wrap { display: grid; grid-template-columns: auto 1fr; gap: 40px; align-items: center; }
+    .slot {
+      width: 176px; height: 176px; display: grid; place-items: center;
+      background: var(--trim);
+      clip-path: var(--notch);
+      box-shadow: inset 6px 6px 0 #3b3944, inset -6px -6px 0 #6d6b78;
+    }
+    .slot img { width: 128px; height: 128px; filter: drop-shadow(4px 4px 0 rgb(0 0 0 / .35)); }
+    .hero h1 {
+      margin: 0; font-size: clamp(28px, 6.2vw, 56px); line-height: 1.15; color: var(--ink);
+      text-shadow: 4px 4px 0 var(--gray-3);
+    }
+    .hero h1 .sub { color: var(--purple); text-shadow: 4px 4px 0 var(--lavender); }
+    .hero p { margin: 18px 0 26px; font-size: 22px; max-width: 560px; color: #3a3843; }
+    .press {
+      display: inline-flex; align-items: center; gap: 12px; text-decoration: none;
+      font: 12px/1 var(--hirom-display); color: #fff;
+      background: var(--purple); padding: 16px 20px;
+      clip-path: var(--notch);
+      box-shadow: inset -4px -4px 0 var(--purple-dark), inset 4px 4px 0 #7a68d8;
+    }
+    .press:hover { background: #5644b4; }
+    .press:active { box-shadow: inset 4px 4px 0 var(--purple-dark), inset -4px -4px 0 #7a68d8; }
+    .press .blink { animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ---------- Palette strip (16 colors, like one CGRAM row) ---------- */
+    .cgram { display: grid; grid-template-columns: repeat(16, 1fr); height: 12px; margin: 0; }
+    .cgram span { display: block; }
+
+    /* ---------- Section headings ---------- */
+    h2 {
+      margin: 0 0 22px; font: 14px/1.4 var(--hirom-display); color: var(--ink);
+      display: flex; align-items: center; gap: 12px;
+    }
+    h2::after { content: ""; flex: 1; height: 4px; background: repeating-linear-gradient(to right, var(--gray-3) 0 8px, transparent 8px 12px); }
+    section.apps { padding: 44px 0 20px; }
+
+    /* ---------- Cartridges ---------- */
+    .carts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
+    .cart-wrap { filter: drop-shadow(6px 6px 0 var(--gray-3)); transition: transform .12s steps(2); }
+    .cart-wrap:hover, .cart-wrap:focus-within { transform: translateY(-4px); }
+    .cart {
+      position: relative; background: var(--gray-2); padding: 34px 18px 22px;
+      clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%, 0 16px);
+      box-shadow: inset 4px 4px 0 rgb(255 255 255 / .55), inset -4px -4px 0 var(--gray-3);
+      height: 100%; display: flex; flex-direction: column;
+    }
+    .cart::before {
+      /* grip ridges along the top */
+      content: ""; position: absolute; left: 28px; right: 28px; top: 10px; height: 14px;
+      background: repeating-linear-gradient(to bottom, var(--gray-3) 0 2px, transparent 2px 4px);
+      opacity: .8;
+    }
+    .label {
+      position: relative; padding: 18px 16px 16px; color: #fff;
+      background:
+        radial-gradient(circle at 18% 22%, rgb(255 255 255 / .9) 0 1px, transparent 1.5px) 0 0 / 46px 46px,
+        radial-gradient(circle at 70% 64%, rgb(255 255 255 / .6) 0 1px, transparent 1.5px) 0 0 / 62px 62px,
+        linear-gradient(160deg, #6a57cf, var(--purple) 55%, var(--purple-dark));
+      clip-path: var(--notch);
+      box-shadow: inset 0 0 0 4px var(--purple-dark), inset 0 0 0 6px rgb(255 255 255 / .18);
+      display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center;
+    }
+    .label img { width: 64px; height: 64px; filter: drop-shadow(3px 3px 0 rgb(0 0 0 / .35)); }
+    .label .hirom-suite { color: var(--lavender); font-size: 8px; }
+    .label h3 {
+      margin: 8px 0 0; font: 15px/1.3 var(--hirom-display); color: #fff;
+      text-shadow: 3px 3px 0 var(--purple-dark);
+    }
+    .label h3 .cursor { color: #fff; margin-left: -4px; margin-right: 6px; visibility: hidden; }
+    .cart-wrap:hover .cursor, .cart-wrap:focus-within .cursor { visibility: visible; animation: nudge .5s steps(2) infinite; }
+    @keyframes nudge { 50% { transform: translateX(3px); } }
+    .manual { padding: 16px 4px 0; flex: 1; display: flex; flex-direction: column; }
+    .manual p { margin: 0 0 14px; font-size: 20px; }
+    .manual ul { margin: 0 0 18px; padding: 0; list-style: none; display: grid; gap: 5px; }
+    .manual li { position: relative; padding-left: 22px; font-size: 18px; line-height: 1.35; color: #34323c; }
+    .manual li::before { content: ""; position: absolute; left: 2px; top: .45em; width: 8px; height: 8px; background: var(--purple); box-shadow: 2px 2px 0 var(--lavender); }
+    .start {
+      margin-top: auto; align-self: flex-start; display: inline-flex; gap: 10px; align-items: center;
+      font: 10px/1 var(--hirom-display); text-decoration: none; color: #fff;
+      background: var(--purple); padding: 13px 16px; clip-path: var(--notch);
+      box-shadow: inset -4px -4px 0 var(--purple-dark), inset 4px 4px 0 #7a68d8;
+    }
+    .start:hover { background: #5644b4; }
+    .start::after { content: "▶"; }
+
+    /* ---------- RPG dialog box ---------- */
+    .dialog {
+      margin: 40px 0 0; padding: 22px 24px; color: #f1effa;
+      background: linear-gradient(to bottom, #3a2d88, #20185a);
+      clip-path: var(--notch);
+      box-shadow: inset 0 0 0 4px #ece9fb, inset 0 0 0 8px #20185a, inset 0 0 0 10px rgb(255 255 255 / .2);
+      font-size: 20px; line-height: 1.55;
+    }
+    .dialog p { margin: 0; }
+    .dialog p + p { margin-top: 10px; }
+    .dialog .speaker { font: 10px/1 var(--hirom-display); color: var(--lavender); margin-bottom: 12px; display: block; }
+    .dialog .more { display: inline-block; margin-left: 6px; animation: blink 1s steps(1) infinite; color: var(--lavender); }
+    .soon { margin: 22px 0 0; font: 10px/1.6 var(--hirom-display); color: var(--muted); }
+
+    footer { margin-top: 56px; padding: 22px 0 36px; border-top: 4px solid var(--gray-3); box-shadow: inset 0 2px 0 rgb(255 255 255 / .4); color: var(--muted); font-size: 18px; }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+    @media (max-width: 720px) {
+      .hero .wrap { grid-template-columns: 1fr; gap: 24px; }
+      .slot { width: 128px; height: 128px; }
+      .slot img { width: 92px; height: 92px; }
+      .hero p { font-size: 19px; }
+      .carts { grid-template-columns: 1fr; }
+      .switches .power span:last-child { display: none; }
+    }
+    @media (max-width: 420px) {
+      .switches .power { display: none; }
+      .console-top .hirom-suite { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .press .blink, .dialog .more, .cart-wrap .cursor { animation: none !important; }
+      .cart-wrap { transition: none; }
     }
   </style>
-  <link rel="stylesheet" href="brand/brand.css">
 </head>
 <body>
-  <main>
-    <div class="top">
-      <a class="hirom-lockup" href="./">
+  <header class="console-top">
+    <div class="wrap">
+      <a class="hirom-lockup" href="./" aria-label="HiROM Studio home">
         <img src="brand/mark.svg" alt="">
-        <span class="hirom-word">HiROM <span class="sub">Studio</span></span>
+        <span class="names"><span class="hirom-suite">Hardware-accurate</span><span class="hirom-word">HiROM <span class="sub">Studio</span></span></span>
       </a>
-      <a class="back" href="../">← All tools</a>
+      <div class="switches">
+        <span class="power" aria-hidden="true"><span class="led"></span><span>POWER</span></span>
+        <a class="slider-btn" href="../">◀ ALL TOOLS</a>
+      </div>
     </div>
+  </header>
 
-    <section class="hero">
-      <img src="brand/mark.svg" alt="">
+  <section class="hero">
+    <div class="wrap">
+      <div class="slot"><img src="brand/mark.svg" alt=""></div>
       <div>
-        <h1 class="hirom-word">HiROM <span class="sub">Studio</span></h1>
-        <p>Hardware-accurate tools for making SNES music and games, right in your browser.</p>
+        <h1 class="display">HiROM<br><span class="sub">STUDIO</span></h1>
+        <p>Make SNES music, sound and pixel art in your browser, inside the same limits the real hardware had.</p>
+        <a class="press" href="#apps"><span class="blink">▶</span> PRESS START</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="cgram" aria-hidden="true">
+    <span style="background:#25232c"></span><span style="background:#3b3944"></span><span style="background:#55535f"></span><span style="background:#7d7a88"></span>
+    <span style="background:#a3a0ae"></span><span style="background:#c2c0cb"></span><span style="background:#d5d3dc"></span><span style="background:#ecebf1"></span>
+    <span style="background:#20185a"></span><span style="background:#2f2470"></span><span style="background:#4b3a9c"></span><span style="background:#5b48c2"></span>
+    <span style="background:#7a68d8"></span><span style="background:#8f82e6"></span><span style="background:#b3a9ef"></span><span style="background:#e23a3f"></span>
+  </div>
+
+  <main class="wrap">
+    <section class="apps" id="apps" aria-labelledby="apps-title">
+      <h2 id="apps-title">SELECT A CARTRIDGE</h2>
+      <div class="carts">
+        <div class="cart-wrap">
+          <article class="cart">
+            <div class="label">
+              <img src="brand/sound.svg" alt="">
+              <div>
+                <span class="hirom-suite">HiROM Studio</span>
+                <h3><span class="cursor" aria-hidden="true">▶</span>HiROM SOUND</h3>
+              </div>
+            </div>
+            <div class="manual">
+              <p>Compose music and sound effects that sound like the real S-DSP sound chip, not a generic chiptune.</p>
+              <ul>
+                <li>8-voice S-DSP engine with bit-exact Gaussian interpolation</li>
+                <li>BRR sample studio with loop fitting and A/B audition</li>
+                <li>Piano roll and tracker on the same song</li>
+                <li>ADSR/GAIN envelopes, pitch modulation and noise</li>
+                <li>Echo with an 8-tap FIR filter editor</li>
+                <li>SFX bank that ducks music voices like real games</li>
+                <li>Live 64 KB audio RAM budget</li>
+                <li>WAV export with loop points, stems and SFX packs</li>
+              </ul>
+              <a class="start" href="sound/">START HiROM SOUND</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="cart-wrap">
+          <article class="cart">
+            <div class="label">
+              <img src="brand/pixel.svg" alt="">
+              <div>
+                <span class="hirom-suite">HiROM Studio</span>
+                <h3><span class="cursor" aria-hidden="true">▶</span>HiROM PIXEL</h3>
+              </div>
+            </div>
+            <div class="manual">
+              <p>Draw sprites, tiles and whole scenes inside the real limits of the S-PPU graphics chip.</p>
+              <ul>
+                <li>True indexed color with 15-bit BGR555 CGRAM</li>
+                <li>16 × 16 sub-palettes, 2/4/8bpp art</li>
+                <li>Pixel-perfect pencil, shapes, fill and dither brushes</li>
+                <li>Tilesets and BG1–BG3 tilemaps</li>
+                <li>Scene composer with main/sub screens, color math and parallax</li>
+                <li>Animated sprites and palette cycling at 60 Hz</li>
+                <li>Live 64 KB VRAM budget</li>
+                <li>PNG, indexed PNG, .pal, spritesheet and Tiled map export</li>
+              </ul>
+              <a class="start" href="pixel/">START HiROM PIXEL</a>
+            </div>
+          </article>
+        </div>
+      </div>
+      <p class="soon">MORE CARTRIDGES COMING SOON…</p>
+
+      <div class="dialog" role="note">
+        <span class="speaker">HiROM STUDIO</span>
+        <p>Every app runs entirely in your browser. Your projects save on this device, and you can save them as files any time.</p>
+        <p>Everything is built around the real chips: the S-DSP for sound and the S-PPU for graphics, palettes and memory budgets included.<span class="more" aria-hidden="true">▼</span></p>
       </div>
     </section>
-
-    <h2>Apps</h2>
-    <article class="app">
-      <img src="brand/sound.svg" alt="">
-      <div>
-        <h3 class="hirom-word">HiROM <span class="sub">Sound</span></h3>
-        <p class="lede">Compose music and sound effects that sound like the real S-DSP sound chip, not a generic chiptune.</p>
-        <ul class="features">
-          <li>8-voice S-DSP engine, bit-exact Gaussian interpolation</li>
-          <li>BRR sample studio with loop fitting and A/B audition</li>
-          <li>Piano roll and tracker on the same song</li>
-          <li>ADSR/GAIN envelopes, pitch modulation and noise</li>
-          <li>Echo with an 8-tap FIR filter editor</li>
-          <li>SFX bank that ducks music voices like real games</li>
-          <li>Live 64 KB audio RAM budget</li>
-          <li>WAV export with loop points, stems and SFX packs</li>
-        </ul>
-        <a class="open" href="sound/">Open HiROM Sound →</a>
-      </div>
-    </article>
-
-    <article class="app">
-      <img src="brand/pixel.svg" alt="">
-      <div>
-        <h3 class="hirom-word">HiROM <span class="sub">Pixel</span></h3>
-        <p class="lede">Draw sprites, tiles and whole scenes inside the real limits of the S-PPU graphics chip.</p>
-        <ul class="features">
-          <li>True indexed color with 15-bit BGR555 CGRAM</li>
-          <li>16 × 16 sub-palettes, 2/4/8bpp art</li>
-          <li>Pixel-perfect pencil, shapes, fill and dither brushes</li>
-          <li>Tilesets and BG1–BG3 tilemaps</li>
-          <li>Scene composer with main/sub screens, color math and parallax</li>
-          <li>Animated sprites and palette cycling at 60 Hz</li>
-          <li>Live 64 KB VRAM budget</li>
-          <li>PNG, indexed PNG, .pal, spritesheet and Tiled map export</li>
-        </ul>
-        <a class="open" href="pixel/">Open HiROM Pixel →</a>
-      </div>
-    </article>
-    <p class="soon">More HiROM Studio apps are on the way.</p>
-
-    <footer>
-      HiROM Studio apps run entirely in your browser. Your projects are saved on this device, and you can save them as files any time.
-    </footer>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <span>HiROM Studio · HiROM Sound · HiROM Pixel</span>
+      <span>An independent homage to 16-bit consoles. Not affiliated with or endorsed by Nintendo.</span>
+    </div>
+  </footer>
 </body>
 </html>
