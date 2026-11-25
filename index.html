@@ -48,6 +48,7 @@
     }
     a.card:hover, a.card:focus-visible { border-color: var(--accent); transform: translateY(-1px); outline: none; }
     a.card img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; }
+    a.card .icon { width: 28px; height: 28px; flex-shrink: 0; font-size: 22px; line-height: 28px; text-align: center; margin-top: 2px; }
     .card strong { display: block; font-weight: 600; }
     .card span { display: block; color: var(--muted); font-size: 0.9rem; }
     .empty { color: var(--muted); }
@@ -74,6 +75,7 @@
     let active = "All";
 
     const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const isExternal = url => /^https?:\/\//i.test(url);
     const favicon = url => { try { return `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url).hostname}`; } catch { return ""; } };
 
     function renderFilters() {
@@ -94,8 +96,8 @@
           <h2>${esc(cat)}</h2>
           <div class="grid">
             ${tools.map(t => `
-              <a class="card" href="${esc(t.url)}" target="_blank" rel="noopener">
-                <img src="${favicon(t.url)}" alt="" loading="lazy">
+              <a class="card" href="${esc(t.url)}"${isExternal(t.url) ? ' target="_blank" rel="noopener"' : ""}>
+                ${t.icon ? `<span class="icon" aria-hidden="true">${esc(t.icon)}</span>` : `<img src="${favicon(t.url)}" alt="" loading="lazy">`}
                 <div><strong>${esc(t.name)}</strong><span>${esc(t.description)}</span></div>
               </a>`).join("")}
           </div>

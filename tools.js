@@ -1,6 +1,8 @@
 // Add, remove or edit your tools here. Each tool needs a name, url and category.
-// description and tags are optional.
+// description, tags and icon (an emoji, used instead of the site's favicon) are optional.
+// Relative urls like "timezone/" point to tools built in this repo.
 const TOOLS = [
+  { name: "Time Zone Finder", url: "timezone/", category: "My Tools", icon: "🕒", description: "Convert a time in another zone to your local time.", tags: ["time", "timezone", "convert"] },
   { name: "GitHub", url: "https://github.com", category: "Development", description: "Code hosting and collaboration.", tags: ["git", "code"] },
   { name: "Regex101", url: "https://regex101.com", category: "Development", description: "Build and test regular expressions.", tags: ["regex"] },
   { name: "JSON Formatter", url: "https://jsonformatter.org", category: "Development", description: "Format and validate JSON.", tags: ["json"] },

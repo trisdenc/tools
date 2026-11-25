@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Zone Finder</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+      --border: #e3e3e0; --accent: #2f6fde; --chip: #eef1f6; --warn: #b4560b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141416; --card: #1d1d20; --text: #ececee; --muted: #9a9aa2;
+        --border: #2c2c31; --accent: #6b9bff; --chip: #26272d; --warn: #f0a050;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
+    .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .back:hover { color: var(--accent); }
+    h1 { margin: 12px 0 4px; font-size: 1.8rem; letter-spacing: -0.02em; }
+    .sub { margin: 0 0 24px; color: var(--muted); }
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    input {
+      width: 100%; padding: 10px 12px; font: inherit; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    input[aria-invalid="true"] { border-color: var(--warn); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .chips button {
+      font: inherit; font-size: 0.85rem; padding: 6px 12px; cursor: pointer;
+      background: var(--chip); color: var(--text); border: 0; border-radius: 999px;
+    }
+    .chips button:hover { outline: 1px solid var(--accent); }
+    .result-label { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .big { font-size: 2.6rem; font-weight: 650; letter-spacing: -0.02em; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+    .date { font-size: 1.1rem; margin: 0; }
+    .note { margin: 12px 0 0; color: var(--muted); font-size: 0.95rem; }
+    .day { color: var(--warn); font-weight: 600; }
+    .error { color: var(--warn); }
+    .actions { display: flex; gap: 8px; margin-top: 16px; }
+    .actions button {
+      font: inherit; font-size: 0.9rem; padding: 8px 14px; cursor: pointer;
+      background: transparent; color: var(--accent); border: 1px solid var(--border); border-radius: 10px;
+    }
+    @media (max-width: 480px) { .row { grid-template-columns: 1fr; } .big { font-size: 2.1rem; } }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../">← All tools</a>
+    <h1>Time Zone Finder</h1>
+    <p class="sub">Enter a time somewhere else and see what time that is for you.</p>
+
+    <div class="panel">
+      <div class="row">
+        <div>
+          <label for="date">Date</label>
+          <input id="date" type="date">
+        </div>
+        <div>
+          <label for="time">Time</label>
+          <input id="time" type="time">
+        </div>
+      </div>
+      <label for="zone">Their time zone</label>
+      <input id="zone" list="zones" placeholder="Type a city or zone, e.g. Tokyo, PST, UTC" autocomplete="off">
+      <datalist id="zones"></datalist>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="panel" id="result" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const myZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Friendly shortcuts people commonly type.
+    const ALIASES = {
+      "UTC": "UTC", "GMT": "UTC", "Z": "UTC",
+      "PST": "America/Los_Angeles", "PDT": "America/Los_Angeles", "PT": "America/Los_Angeles", "PACIFIC": "America/Los_Angeles",
+      "MST": "America/Denver", "MDT": "America/Denver", "MT": "America/Denver", "MOUNTAIN": "America/Denver",
+      "CST": "America/Chicago", "CDT": "America/Chicago", "CT": "America/Chicago", "CENTRAL": "America/Chicago",
+      "EST": "America/New_York", "EDT": "America/New_York", "ET": "America/New_York", "EASTERN": "America/New_York",
+      "AKST": "America/Anchorage", "HST": "Pacific/Honolulu",
+      "BST": "Europe/London", "UK": "Europe/London", "CET": "Europe/Paris", "CEST": "Europe/Paris",
+      "IST": "Asia/Kolkata", "JST": "Asia/Tokyo", "KST": "Asia/Seoul", "AEST": "Australia/Sydney", "AEDT": "Australia/Sydney",
+    };
+    const QUICK = [
+      ["Pacific", "America/Los_Angeles"], ["Mountain", "America/Denver"], ["Central", "America/Chicago"],
+      ["Eastern", "America/New_York"], ["UTC", "UTC"], ["London", "Europe/London"],
+      ["Paris", "Europe/Paris"], ["India", "Asia/Kolkata"], ["Tokyo", "Asia/Tokyo"], ["Sydney", "Australia/Sydney"],
+    ];
+
+    const allZones = Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : QUICK.map(q => q[1]);
+    if (!allZones.includes("UTC")) allZones.unshift("UTC");
+    $("zones").innerHTML = allZones.map(z => `<option value="${z}">${z.replace(/_/g, " ")}</option>`).join("");
+    $("chips").innerHTML = QUICK.map(([n, z]) => `<button type="button" data-zone="${z}">${n}</button>`).join("");
+
+    // Turn whatever was typed into a real IANA zone name, or null.
+    function resolveZone(input) {
+      const raw = input.trim();
+      if (!raw) return null;
+      const up = raw.toUpperCase();
+      if (ALIASES[up]) return ALIASES[up];
+      const exact = allZones.find(z => z.toLowerCase() === raw.toLowerCase());
+      if (exact) return exact;
+      const norm = raw.toLowerCase().replace(/[\s_]+/g, "_");
+      const byCity = allZones.find(z => z.toLowerCase().split("/").pop() === norm);
+      if (byCity) return byCity;
+      const partial = allZones.filter(z => z.toLowerCase().includes(norm));
+      return partial.length === 1 ? partial[0] : null;
+    }
+
+    // Offset (ms) of a zone from UTC at a given instant.
+    function offsetAt(zone, ms) {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      }).formatToParts(new Date(ms));
+      const p = Object.fromEntries(parts.map(x => [x.type, +x.value]));
+      return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(ms / 1000) * 1000;
+    }
+
+    // Wall-clock time in `zone` -> real instant (handles daylight saving changes).
+    function wallToInstant(y, mo, d, h, mi, zone) {
+      const guess = Date.UTC(y, mo - 1, d, h, mi);
+      let t = guess - offsetAt(zone, guess);
+      t = guess - offsetAt(zone, t);
+      return t;
+    }
+
+    const fmt = (zone, opts) => new Intl.DateTimeFormat(undefined, { timeZone: zone, ...opts });
+    const ymd = (zone, ms) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(ms);
+    const pretty = z => z.replace(/_/g, " ");
+
+    function render() {
+      const zoneInput = $("zone");
+      const typed = zoneInput.value.trim();
+      const zone = resolveZone(zoneInput.value);
+      zoneInput.setAttribute("aria-invalid", typed && !zone ? "true" : "false");
+      const out = $("result");
+
+      if (!$("date").value || !$("time").value || !zone) {
+        const msg = typed && !zone
+          ? "I don't recognize that time zone. Try a city like “Chicago” or pick from the list."
+          : "Pick a date, time and time zone to see it in your time.";
+        out.innerHTML = `<p class="result-label">Your time (${pretty(myZone)})</p>
+          <p class="note ${typed && !zone ? "error" : ""}">${msg}</p>`;
+        return;
+      }
+
+      const [y, mo, d] = $("date").value.split("-").map(Number);
+      const [h, mi] = $("time").value.split(":").map(Number);
+      const instant = wallToInstant(y, mo, d, h, mi, zone);
+
+      const myTime = fmt(myZone, { hour: "numeric", minute: "2-digit" }).format(instant);
+      const myDate = fmt(myZone, { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(instant);
+      const theirTime = fmt(zone, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(instant);
+
+      const diffH = (offsetAt(myZone, instant) - offsetAt(zone, instant)) / 3600000;
+      const absH = Math.abs(diffH);
+      const diffText = diffH === 0 ? "You're on the same time."
+        : `You are ${absH} hour${absH === 1 ? "" : "s"} ${diffH > 0 ? "ahead of" : "behind"} them.`;
+
+      const theirDay = ymd(zone, instant), myDay = ymd(myZone, instant);
+      const dayNote = theirDay === myDay ? "" : `<span class="day">${myDay > theirDay ? "Next day" : "Previous day"} for you.</span> `;
+
+      out.innerHTML = `
+        <p class="result-label">Your time (${pretty(myZone)})</p>
+        <p class="big">${myTime}</p>
+        <p class="date">${myDate}</p>
+        <p class="note">${dayNote}${theirTime} in ${pretty(zone)}. ${diffText}</p>
+        <div class="actions">
+          <button type="button" id="copy">Copy</button>
+          <button type="button" id="share">Copy link</button>
+        </div>`;
+
+      $("copy").onclick = e => copy(`${myTime}, ${myDate} (${pretty(myZone)}) = ${theirTime}`, e.target);
+      $("share").onclick = e => copy(location.href.split("?")[0] + "?" + new URLSearchParams({
+        d: $("date").value, t: $("time").value, z: zone }), e.target);
+
+      try { localStorage.setItem("tz-last-zone", zone); } catch {}
+    }
+
+    function copy(text, btn) {
+      if (!navigator.clipboard) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent; btn.textContent = "Copied!";
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      });
+    }
+
+    // Starting values: shared link > last zone used > now.
+    const params = new URLSearchParams(location.search);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    $("date").value = params.get("d") || `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    $("time").value = params.get("t") || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    let last = null;
+    try { last = localStorage.getItem("tz-last-zone"); } catch {}
+    $("zone").value = params.get("z") || last || "";
+
+    ["date", "time", "zone"].forEach(id => $(id).addEventListener("input", render));
+    $("chips").addEventListener("click", e => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      $("zone").value = b.dataset.zone;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
