@@ -438,7 +438,7 @@ export function exportProjectJson(project, brrFor, { embedBrr = true } = {}) {
   return out;
 }
 
-// 16-bit mono WAV (used to store source recordings inside .snesproj files)
+// 16-bit mono WAV (used to store source recordings inside .hiromsound project files)
 export function floatToWav(data, rate) {
   const n = data.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
   const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };

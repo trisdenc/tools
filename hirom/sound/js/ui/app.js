@@ -250,6 +250,10 @@ function startProject({ project, sources }) {
   setUi({ tab: "song" });
 }
 
+// HiROM Sound project file: a zip of project.json + BRR samples + source recordings.
+// Older .snesproj files have the same layout and still open.
+const PROJECT_EXT = "hiromsound";
+
 const safeName = () => (state.project.meta.title || "Untitled").replace(/[\\/:*?"<>|]+/g, "_");
 
 let jszip = null;
@@ -281,7 +285,9 @@ async function projectZipBlob() {
 
 async function saveProjectFile() {
   try {
-    download(await projectZipBlob(), `${safeName()}.snesproj`);
+    // octet-stream so browsers don't add ".zip" to the name
+    const zip = await projectZipBlob();
+    download(new Blob([zip], { type: "application/octet-stream" }), `${safeName()}.${PROJECT_EXT}`);
     toast("Project saved");
   } catch (e) { toast(`Save failed: ${e.message || e}`, "error"); }
 }

@@ -54,6 +54,8 @@ accounting.
   no allocation in the audio loop, so it's deterministic and GC-free; it renders
   about 70× faster than real time (≈1.5% of a core for live playback). Porting
   `dsp.js` to Rust later is straightforward since it has no dependencies.
+- **Project files use `.hiromsound`** instead of the spec's `.snesproj` (same zip
+  layout: `project.json`, `samples/*.brr`, `sources/*.wav`). Old `.snesproj` files still open.
 - **Vanilla JS + canvas instead of React**, to keep the site build-free.
 - **MessagePort instead of SharedArrayBuffer** for meters/playhead: GitHub Pages
   can't send the COOP/COEP headers that SharedArrayBuffer needs (the spec's fallback).
