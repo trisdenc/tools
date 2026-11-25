@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit Converter</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+      --border: #e3e3e0; --accent: #2f6fde; --chip: #eef1f6; --warn: #b4560b; --hl: #eaf1fd;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141416; --card: #1d1d20; --text: #ececee; --muted: #9a9aa2;
+        --border: #2c2c31; --accent: #6b9bff; --chip: #26272d; --warn: #f0a050; --hl: #1f2a40;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+    .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .back:hover { color: var(--accent); }
+    h1 { margin: 12px 0 4px; font-size: 1.8rem; letter-spacing: -0.02em; }
+    .sub { margin: 0 0 20px; color: var(--muted); }
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    input, select {
+      width: 100%; padding: 10px 12px; font: inherit; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    }
+    input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    #quick { font-size: 1.15rem; padding: 12px 14px; }
+    #quick[aria-invalid="true"] { border-color: var(--warn); }
+    .hint { margin: 8px 0 0; font-size: 0.85rem; color: var(--muted); }
+    .hint.error { color: var(--warn); }
+    .hint code { background: var(--chip); padding: 1px 6px; border-radius: 6px; font-size: 0.85em; cursor: pointer; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .chips button {
+      font: inherit; font-size: 0.85rem; padding: 6px 12px; cursor: pointer;
+      background: var(--chip); color: var(--text); border: 1px solid transparent; border-radius: 999px;
+    }
+    .chips button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    .conv { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end; }
+    .pair { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    #swap {
+      font: inherit; font-size: 1.2rem; width: 44px; height: 44px; cursor: pointer;
+      background: var(--chip); color: var(--text); border: 0; border-radius: 10px;
+    }
+    #swap:hover { outline: 1px solid var(--accent); }
+    .answer {
+      margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--hl);
+      font-size: 1.5rem; font-weight: 650; letter-spacing: -0.01em; word-break: break-word;
+      cursor: pointer; font-variant-numeric: tabular-nums;
+    }
+    .answer small { display: block; font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+    h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 8px 6px; border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+    tr { cursor: pointer; }
+    tr:hover td { background: var(--hl); }
+    tr.target td { color: var(--accent); font-weight: 600; }
+    td.val { text-align: right; word-break: break-all; }
+    td.unit { color: var(--muted); white-space: nowrap; width: 45%; }
+    .note { font-size: 0.85rem; color: var(--muted); margin: 10px 0 0; }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 999px;
+      font-size: 0.9rem; opacity: 0; transition: opacity .2s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    @media (max-width: 520px) {
+      .conv { grid-template-columns: 1fr; }
+      #swap { justify-self: center; transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../">← All tools</a>
+    <h1>Unit Converter</h1>
+    <p class="sub">Type a conversion, or pick units below. Click any result to copy it.</p>
+
+    <div class="panel">
+      <label for="quick">Quick convert</label>
+      <input id="quick" type="text" placeholder="e.g. 5 ft to cm" autocomplete="off" spellcheck="false">
+      <p class="hint" id="quickHint">Try <code>5'10" to cm</code> <code>2.5 GB in MiB</code> <code>72 F to C</code> <code>3 cups to ml</code> <code>60 mph to km/h</code></p>
+    </div>
+
+    <div class="panel">
+      <div class="chips" id="cats"></div>
+      <div class="conv">
+        <div class="pair">
+          <label for="value">From</label>
+          <input id="value" type="text" inputmode="decimal" value="1">
+          <select id="from" aria-label="From unit"></select>
+        </div>
+        <button id="swap" type="button" title="Swap units" aria-label="Swap units">⇄</button>
+        <div class="pair">
+          <label for="to">To</label>
+          <select id="to"></select>
+        </div>
+      </div>
+      <div class="answer" id="answer" title="Click to copy"></div>
+      <p class="note" id="catNote"></p>
+    </div>
+
+    <div class="panel">
+      <h2>All conversions</h2>
+      <table><tbody id="all"></tbody></table>
+    </div>
+  </main>
+  <div class="toast" id="toast">Copied</div>
+
+  <script>
+    // ---------- Unit definitions ----------
+    // f = how many base units one of this unit is. Units without f use toBase/fromBase.
+    const U = (id, name, f, aliases = []) => ({ id, name, f, aliases: [id, ...aliases] });
+
+    const CATEGORIES = [
+      { id: "length", name: "Length", base: "m", def: ["ft", "m"], units: [
+        U("nm", "Nanometers", 1e-9, ["nanometer", "nanometers", "nanometre"]),
+        U("µm", "Micrometers", 1e-6, ["um", "micron", "microns", "micrometer", "micrometers"]),
+        U("mm", "Millimeters", 0.001, ["millimeter", "millimeters", "millimetre", "millimetres"]),
+        U("cm", "Centimeters", 0.01, ["centimeter", "centimeters", "centimetre", "centimetres"]),
+        U("m", "Meters", 1, ["meter", "meters", "metre", "metres"]),
+        U("km", "Kilometers", 1000, ["kilometer", "kilometers", "kilometre", "kilometres", "k"]),
+        U("in", "Inches", 0.0254, ["inch", "inches", "\"", "″"]),
+        U("ft", "Feet", 0.3048, ["foot", "feet", "'", "′"]),
+        U("yd", "Yards", 0.9144, ["yard", "yards"]),
+        U("mi", "Miles", 1609.344, ["mile", "miles"]),
+        U("nmi", "Nautical miles", 1852, ["nautical mile", "nautical miles", "nm."]),
+      ]},
+      { id: "mass", name: "Weight", base: "kg", def: ["lb", "kg"], units: [
+        U("mg", "Milligrams", 1e-6, ["milligram", "milligrams"]),
+        U("g", "Grams", 0.001, ["gram", "grams", "gr"]),
+        U("kg", "Kilograms", 1, ["kilogram", "kilograms", "kilo", "kilos", "kgs"]),
+        U("t", "Metric tonnes", 1000, ["tonne", "tonnes", "metric ton", "metric tons"]),
+        U("oz", "Ounces", 0.028349523125, ["ounce", "ounces"]),
+        U("lb", "Pounds", 0.45359237, ["lbs", "pound", "pounds", "#"]),
+        U("st", "Stone", 6.35029318, ["stone", "stones"]),
+        U("ton", "US tons (short)", 907.18474, ["tons", "short ton", "short tons", "us ton"]),
+        U("long ton", "UK tons (long)", 1016.0469088, ["long tons", "uk ton", "imperial ton"]),
+      ]},
+      { id: "volume", name: "Volume", base: "L", def: ["cup", "mL"], units: [
+        U("mL", "Milliliters", 0.001, ["ml", "milliliter", "milliliters", "millilitre", "cc", "cm3", "cm³"]),
+        U("L", "Liters", 1, ["l", "liter", "liters", "litre", "litres"]),
+        U("m³", "Cubic meters", 1000, ["m3", "cubic meter", "cubic meters"]),
+        U("tsp", "Teaspoons (US)", 0.00492892159375, ["teaspoon", "teaspoons"]),
+        U("tbsp", "Tablespoons (US)", 0.01478676478125, ["tablespoon", "tablespoons", "tbs"]),
+        U("fl oz", "Fluid ounces (US)", 0.0295735295625, ["floz", "fluid ounce", "fluid ounces", "fl. oz"]),
+        U("cup", "Cups (US)", 0.2365882365, ["cups", "c"]),
+        U("pt", "Pints (US)", 0.473176473, ["pint", "pints"]),
+        U("qt", "Quarts (US)", 0.946352946, ["quart", "quarts"]),
+        U("gal", "Gallons (US)", 3.785411784, ["gallon", "gallons", "us gal"]),
+        U("imp fl oz", "Fluid ounces (UK)", 0.0284130625, ["uk fl oz"]),
+        U("imp pt", "Pints (UK)", 0.56826125, ["uk pint", "uk pints", "imperial pint"]),
+        U("imp gal", "Gallons (UK)", 4.54609, ["uk gal", "uk gallon", "uk gallons", "imperial gallon", "imperial gallons"]),
+        U("in³", "Cubic inches", 0.016387064, ["in3", "cubic inch", "cubic inches", "cu in"]),
+        U("ft³", "Cubic feet", 28.316846592, ["ft3", "cubic foot", "cubic feet", "cu ft"]),
+      ]},
+      { id: "temp", name: "Temperature", def: ["°F", "°C"], units: [
+        { id: "°C", name: "Celsius", aliases: ["°C", "c", "C", "celsius", "centigrade", "degc", "deg c"], toBase: v => v, fromBase: v => v },
+        { id: "°F", name: "Fahrenheit", aliases: ["°F", "f", "F", "fahrenheit", "degf", "deg f"], toBase: v => (v - 32) * 5 / 9, fromBase: v => v * 9 / 5 + 32 },
+        { id: "K", name: "Kelvin", aliases: ["K", "k", "kelvin"], toBase: v => v - 273.15, fromBase: v => v + 273.15 },
+      ]},
+      { id: "area", name: "Area", base: "m²", def: ["ft²", "m²"], units: [
+        U("mm²", "Square millimeters", 1e-6, ["mm2", "sq mm"]),
+        U("cm²", "Square centimeters", 1e-4, ["cm2", "sq cm"]),
+        U("m²", "Square meters", 1, ["m2", "sq m", "sqm", "square meter", "square meters"]),
+        U("ha", "Hectares", 1e4, ["hectare", "hectares"]),
+        U("km²", "Square kilometers", 1e6, ["km2", "sq km", "square kilometer", "square kilometers"]),
+        U("in²", "Square inches", 0.00064516, ["in2", "sq in", "square inch", "square inches"]),
+        U("ft²", "Square feet", 0.09290304, ["ft2", "sq ft", "sqft", "square foot", "square feet"]),
+        U("yd²", "Square yards", 0.83612736, ["yd2", "sq yd", "square yard", "square yards"]),
+        U("acre", "Acres", 4046.8564224, ["acres", "ac"]),
+        U("mi²", "Square miles", 2589988.110336, ["mi2", "sq mi", "square mile", "square miles"]),
+      ]},
+      { id: "speed", name: "Speed", base: "m/s", def: ["mph", "km/h"], units: [
+        U("m/s", "Meters per second", 1, ["mps", "meters per second"]),
+        U("km/h", "Kilometers per hour", 1 / 3.6, ["kph", "kmh", "kmph", "km/hr"]),
+        U("mph", "Miles per hour", 0.44704, ["mi/h", "miles per hour"]),
+        U("kn", "Knots", 1852 / 3600, ["knot", "knots", "kt", "kts"]),
+        U("ft/s", "Feet per second", 0.3048, ["fps", "feet per second"]),
+      ]},
+      { id: "time", name: "Time", base: "s", def: ["h", "min"], units: [
+        U("ms", "Milliseconds", 0.001, ["millisecond", "milliseconds"]),
+        U("s", "Seconds", 1, ["sec", "secs", "second", "seconds"]),
+        U("min", "Minutes", 60, ["mins", "minute", "minutes"]),
+        U("h", "Hours", 3600, ["hr", "hrs", "hour", "hours"]),
+        U("d", "Days", 86400, ["day", "days"]),
+        U("wk", "Weeks", 604800, ["week", "weeks", "w"]),
+        U("mo", "Months (average)", 2629746, ["month", "months"]),
+        U("yr", "Years (average)", 31556952, ["y", "year", "years"]),
+      ]},
+      { id: "data", name: "Data", base: "B", def: ["GB", "MB"],
+        note: "KB, MB, GB… are powers of 1000. KiB, MiB, GiB… are powers of 1024 (what Windows shows as “KB/MB/GB”). Lowercase b means bits.",
+        units: [
+        U("bit", "Bits", 0.125, ["bits", "b"]),
+        U("B", "Bytes", 1, ["byte", "bytes"]),
+        U("KB", "Kilobytes", 1e3, ["kb", "kB", "kilobyte", "kilobytes"]),
+        U("MB", "Megabytes", 1e6, ["mb", "megabyte", "megabytes"]),
+        U("GB", "Gigabytes", 1e9, ["gb", "gigabyte", "gigabytes", "gig", "gigs"]),
+        U("TB", "Terabytes", 1e12, ["tb", "terabyte", "terabytes"]),
+        U("PB", "Petabytes", 1e15, ["pb", "petabyte", "petabytes"]),
+        U("KiB", "Kibibytes", 1024, ["kib", "kibibyte", "kibibytes"]),
+        U("MiB", "Mebibytes", 1024 ** 2, ["mib", "mebibyte", "mebibytes"]),
+        U("GiB", "Gibibytes", 1024 ** 3, ["gib", "gibibyte", "gibibytes"]),
+        U("TiB", "Tebibytes", 1024 ** 4, ["tib", "tebibyte", "tebibytes"]),
+        U("PiB", "Pebibytes", 1024 ** 5, ["pib", "pebibyte", "pebibytes"]),
+        U("Kb", "Kilobits", 125, ["kbit", "kilobit", "kilobits"]),
+        U("Mb", "Megabits", 125e3, ["mbit", "megabit", "megabits"]),
+        U("Gb", "Gigabits", 125e6, ["gbit", "gigabit", "gigabits"]),
+      ]},
+      { id: "rate", name: "Data rate", base: "B/s", def: ["Mbps", "MB/s"],
+        note: "Internet speeds are usually in megabits (Mbps); downloads usually show megabytes (MB/s). 8 bits = 1 byte.",
+        units: [
+        U("bps", "Bits per second", 0.125, ["bit/s", "b/s"]),
+        U("Kbps", "Kilobits per second", 125, ["kbps", "kbit/s", "kb/s"]),
+        U("Mbps", "Megabits per second", 125e3, ["mbps", "mbit/s", "mb/s", "megabits per second"]),
+        U("Gbps", "Gigabits per second", 125e6, ["gbps", "gbit/s", "gb/s", "gigabits per second"]),
+        U("B/s", "Bytes per second", 1, ["bytes per second"]),
+        U("KB/s", "Kilobytes per second", 1e3, ["kbytes/s"]),
+        U("MB/s", "Megabytes per second", 1e6, ["mbytes/s", "megabytes per second"]),
+        U("GB/s", "Gigabytes per second", 1e9, ["gbytes/s", "gigabytes per second"]),
+      ]},
+      { id: "pressure", name: "Pressure", base: "Pa", def: ["psi", "bar"], units: [
+        U("Pa", "Pascals", 1, ["pa", "pascal", "pascals"]),
+        U("kPa", "Kilopascals", 1e3, ["kpa", "kilopascal", "kilopascals"]),
+        U("bar", "Bar", 1e5, ["bars"]),
+        U("psi", "Pounds per sq inch", 6894.757293168, ["lb/in2", "lb/in²"]),
+        U("atm", "Atmospheres", 101325, ["atmosphere", "atmospheres"]),
+        U("mmHg", "mm of mercury", 133.322387415, ["mmhg", "torr"]),
+        U("inHg", "Inches of mercury", 3386.389, ["inhg"]),
+      ]},
+      { id: "energy", name: "Energy", base: "J", def: ["kcal", "kJ"], units: [
+        U("J", "Joules", 1, ["j", "joule", "joules"]),
+        U("kJ", "Kilojoules", 1e3, ["kj", "kilojoule", "kilojoules"]),
+        U("cal", "Calories (small)", 4.184, ["calorie", "calories"]),
+        U("kcal", "Kilocalories (food Calories)", 4184, ["Cal", "kilocalorie", "kilocalories"]),
+        U("Wh", "Watt-hours", 3600, ["wh", "watt hour", "watt hours"]),
+        U("kWh", "Kilowatt-hours", 3.6e6, ["kwh", "kilowatt hour", "kilowatt hours"]),
+        U("BTU", "BTU", 1055.05585262, ["btu", "btus"]),
+        U("ft·lbf", "Foot-pounds", 1.3558179483, ["ft-lb", "ft lb", "ftlb", "foot pound", "foot pounds"]),
+      ]},
+      { id: "power", name: "Power", base: "W", def: ["hp", "kW"], units: [
+        U("W", "Watts", 1, ["w", "watt", "watts"]),
+        U("kW", "Kilowatts", 1e3, ["kw", "kilowatt", "kilowatts"]),
+        U("MW", "Megawatts", 1e6, ["megawatt", "megawatts"]),
+        U("hp", "Horsepower", 745.69987158227, ["horsepower", "bhp"]),
+        U("PS", "Metric horsepower", 735.49875, ["ps", "metric hp"]),
+        U("BTU/h", "BTU per hour", 0.29307107, ["btu/h", "btu/hr"]),
+      ]},
+      { id: "angle", name: "Angle", base: "°", def: ["°", "rad"], units: [
+        U("°", "Degrees", 1, ["deg", "degree", "degrees"]),
+        U("rad", "Radians", 180 / Math.PI, ["radian", "radians"]),
+        U("grad", "Gradians", 0.9, ["gradian", "gradians", "gon"]),
+        U("arcmin", "Arcminutes", 1 / 60, ["arcminute", "arcminutes"]),
+        U("arcsec", "Arcseconds", 1 / 3600, ["arcsecond", "arcseconds"]),
+        U("turn", "Turns", 360, ["turns", "rev", "revolution", "revolutions"]),
+      ]},
+      { id: "fuel", name: "Fuel economy", def: ["mpg", "L/100km"], units: [
+        { id: "mpg", name: "Miles per gallon (US)", aliases: ["mpg", "us mpg"], toBase: v => v * 0.425143707, fromBase: v => v / 0.425143707 },
+        { id: "mpg (UK)", name: "Miles per gallon (UK)", aliases: ["mpg (UK)", "uk mpg", "imp mpg"], toBase: v => v * 0.354006189, fromBase: v => v / 0.354006189 },
+        { id: "km/L", name: "Kilometers per liter", aliases: ["km/l", "kpl"], toBase: v => v, fromBase: v => v },
+        { id: "L/100km", name: "Liters per 100 km", aliases: ["l/100km", "l/100 km"], toBase: v => 100 / v, fromBase: v => 100 / v },
+      ]},
+    ];
+
+    // ---------- Conversion ----------
+    const toBase = (u, v) => u.toBase ? u.toBase(v) : v * u.f;
+    const fromBase = (u, v) => u.fromBase ? u.fromBase(v) : v / u.f;
+    const convert = (v, from, to) => fromBase(to, toBase(from, v));
+
+    const CAT = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+    const unitIn = (cat, id) => cat.units.find(u => u.id === id);
+
+    // Lookup tables for typed unit names: exact case first, then lower case.
+    const exact = new Map(), loose = new Map();
+    for (const c of CATEGORIES) for (const u of c.units) for (const a of u.aliases) {
+      const add = (m, k) => { if (!m.has(k)) m.set(k, []); m.get(k).push({ cat: c, unit: u }); };
+      add(exact, a);
+      add(loose, a.toLowerCase());
+    }
+    function findUnits(text) {
+      const t = text.trim().replace(/\s+/g, " ").replace(/^deg(rees)? /i, "°").replace(/^° ?/, "°").replace(/\.$/, "");
+      if (!t) return [];
+      return exact.get(t) || loose.get(t.toLowerCase()) || loose.get(t.toLowerCase().replace(/s$/, "")) || [];
+    }
+
+    // ---------- Number formatting ----------
+    function fmt(n) {
+      if (!isFinite(n)) return "—";
+      if (n === 0) return "0";
+      const a = Math.abs(n);
+      if (a >= 1e15 || a < 1e-6) return n.toExponential(6).replace(/\.?0+e/, "e");
+      return n.toLocaleString(undefined, { maximumSignificantDigits: 7 });
+    }
+    const plain = n => !isFinite(n) ? "" : (Math.abs(n) >= 1e15 || (n !== 0 && Math.abs(n) < 1e-6))
+      ? n.toExponential(6).replace(/\.?0+e/, "e") : String(+n.toPrecision(10));
+    const parseNum = s => {
+      const t = String(s).trim().replace(/,/g, "");
+      if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(t)) return NaN;
+      return parseFloat(t);
+    };
+
+    // Extra friendly line for feet+inches and hours+minutes.
+    function friendly(value, unit, cat) {
+      if (cat.id === "length" && (unit.id === "ft" || unit.id === "in") && isFinite(value)) {
+        const inches = unit.id === "ft" ? value * 12 : value;
+        if (Math.abs(inches) < 12 || Math.abs(inches) > 12 * 5280) return "";
+        let ft = Math.trunc(inches / 12), rem = Math.round((Math.abs(inches) - Math.abs(ft) * 12) * 10) / 10;
+        if (rem >= 12) { ft += Math.sign(inches); rem = 0; }
+        return `${ft} ft ${rem} in`;
+      }
+      if (cat.id === "time" && ["h", "min"].includes(unit.id) && isFinite(value)) {
+        const mins = unit.id === "h" ? value * 60 : value;
+        if (Math.abs(mins) < 60 || Math.abs(mins) > 60 * 24 * 7) return "";
+        const h = Math.trunc(mins / 60), m = Math.round(Math.abs(mins - h * 60));
+        return m === 60 ? `${h + Math.sign(mins)} h 0 min` : `${h} h ${m} min`;
+      }
+      return "";
+    }
+
+    // ---------- UI ----------
+    const $ = id => document.getElementById(id);
+    let cat = CATEGORIES[0];
+
+    $("cats").innerHTML = CATEGORIES.map(c => `<button type="button" data-cat="${c.id}">${c.name}</button>`).join("");
+
+    function setCategory(c, fromId, toId) {
+      cat = c;
+      document.querySelectorAll("#cats button").forEach(b => b.setAttribute("aria-pressed", b.dataset.cat === c.id));
+      const opts = c.units.map(u => `<option value="${u.id}">${u.name} (${u.id})</option>`).join("");
+      $("from").innerHTML = opts; $("to").innerHTML = opts;
+      $("from").value = fromId || c.def[0];
+      $("to").value = toId || c.def[1];
+      $("catNote").textContent = c.note || "";
+      try { localStorage.setItem("units-cat", c.id); } catch {}
+    }
+
+    function render() {
+      const v = parseNum($("value").value);
+      const from = unitIn(cat, $("from").value), to = unitIn(cat, $("to").value);
+      $("value").setAttribute("aria-invalid", isNaN(v) ? "true" : "false");
+      if (isNaN(v)) {
+        $("answer").innerHTML = `<small>Enter a number</small>—`;
+        $("all").innerHTML = "";
+        return;
+      }
+      const r = convert(v, from, to);
+      const extra = friendly(r, to, cat);
+      $("answer").innerHTML = `<small>${fmt(v)} ${from.id} =</small>${fmt(r)} ${to.id}${extra ? `<small>≈ ${extra}</small>` : ""}`;
+      $("answer").dataset.copy = `${plain(r)} ${to.id}`;
+      $("all").innerHTML = cat.units.map(u => {
+        const x = convert(v, from, u);
+        return `<tr class="${u.id === to.id ? "target" : ""}" data-copy="${plain(x)} ${u.id}">
+          <td class="val">${fmt(x)}</td><td class="unit">${u.id} · ${u.name}</td></tr>`;
+      }).join("");
+    }
+
+    // Quick convert: "5 ft to cm", "72F", "5'10\" in cm", "2 GB in MiB"
+    const SEP = /\s+(?:to|in|into|as)\s+|\s*(?:=|->|→)\s*/gi;
+    function parseQuick(text) {
+      let s = text.trim();
+      if (!s) return null;
+
+      // Feet + inches: 5'10", 5 ft 10 in, 5 feet 10
+      const fi = s.match(/^(\d+(?:\.\d+)?)\s*(?:'|′|ft|feet|foot)\s*(\d+(?:\.\d+)?)\s*(?:"|″|in|inch|inches)?(?=\s|$)(.*)$/i);
+      let value, rest;
+      if (fi) { value = +fi[1] * 12 + +fi[2]; rest = "in" + fi[3]; }
+      else {
+        const m = s.match(/^([-+]?(?:[\d,]+\.?\d*|\.\d+)(?:e[-+]?\d+)?)\s*(.+)$/i);
+        if (!m) return { error: "Start with a number, like “5 ft to cm”." };
+        value = parseNum(m[1]); rest = m[2];
+        if (isNaN(value)) return { error: "I couldn't read that number." };
+      }
+
+      // Try the whole thing as one unit, then every separator split point.
+      const tries = [[rest, null]];
+      for (const m of rest.matchAll(SEP)) tries.push([rest.slice(0, m.index), rest.slice(m.index + m[0].length)]);
+      for (const [l, r] of tries) {
+        const froms = findUnits(l);
+        if (!froms.length) continue;
+        if (r === null) return { value, ...froms[0] };
+        const tos = findUnits(r);
+        for (const f of froms) {
+          const t = tos.find(t => t.cat === f.cat);
+          if (t) return { value, cat: f.cat, unit: f.unit, to: t.unit };
+        }
+        if (tos.length) return { error: `Can't convert ${froms[0].cat.name.toLowerCase()} to ${tos[0].cat.name.toLowerCase()}.` };
+      }
+      return { error: "I don't recognize that unit. Try something like “kg”, “miles” or “GB”." };
+    }
+
+    function runQuick() {
+      const text = $("quick").value;
+      const res = parseQuick(text);
+      const hint = $("quickHint");
+      if (!res) { $("quick").setAttribute("aria-invalid", "false"); hint.className = "hint"; hint.innerHTML = defaultHint; return; }
+      if (res.error) { $("quick").setAttribute("aria-invalid", "true"); hint.className = "hint error"; hint.textContent = res.error; return; }
+      $("quick").setAttribute("aria-invalid", "false");
+      const toId = res.to ? res.to.id
+        : (res.cat.def[0] === res.unit.id ? res.cat.def[1] : res.cat.def[0]);
+      setCategory(res.cat, res.unit.id, toId);
+      $("value").value = plain(res.value);
+      render();
+      const r = convert(res.value, res.unit, unitIn(res.cat, toId));
+      hint.className = "hint";
+      hint.textContent = res.to ? `${res.cat.name}: ${fmt(res.value)} ${res.unit.id} = ${fmt(r)} ${toId}`
+        : `${res.cat.name}: showing ${fmt(res.value)} ${res.unit.id} in every unit below.`;
+    }
+    const defaultHint = $("quickHint").innerHTML;
+
+    // ---------- Events ----------
+    $("cats").addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      setCategory(CAT[b.dataset.cat]); render();
+    });
+    ["value", "from", "to"].forEach(id => $(id).addEventListener("input", render));
+    $("swap").addEventListener("click", () => {
+      const f = $("from").value; $("from").value = $("to").value; $("to").value = f; render();
+    });
+    $("quick").addEventListener("input", runQuick);
+    $("quickHint").addEventListener("click", e => {
+      if (e.target.tagName !== "CODE") return;
+      $("quick").value = e.target.textContent; runQuick(); $("quick").focus();
+    });
+
+    let toastTimer;
+    function copy(text) {
+      if (!text || !navigator.clipboard) return;
+      navigator.clipboard.writeText(text).then(() => {
+        $("toast").textContent = `Copied ${text}`; $("toast").classList.add("show");
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("show"), 1400);
+      });
+    }
+    $("answer").addEventListener("click", () => copy($("answer").dataset.copy));
+    $("all").addEventListener("click", e => { const tr = e.target.closest("tr"); if (tr) copy(tr.dataset.copy); });
+
+    // ---------- Start ----------
+    let saved = null;
+    try { saved = localStorage.getItem("units-cat"); } catch {}
+    setCategory(CAT[saved] || CATEGORIES[0]);
+    render();
+    const q = new URLSearchParams(location.search).get("q");
+    if (q) { $("quick").value = q; runQuick(); }
+    else $("quick").focus();
+  </script>
+</body>
+</html>
