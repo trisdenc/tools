@@ -1,0 +1,5 @@
+# Dependencies and local build leftovers
+node_modules/
+dist/
+*.local
+.vite/
