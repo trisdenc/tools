@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebP Converter</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+      --border: #e3e3e0; --accent: #2f6fde; --chip: #eef1f6; --warn: #b4560b;
+      --good: #1d7a46; --hl: #eaf1fd; --checker: #e9e9e6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141416; --card: #1d1d20; --text: #ececee; --muted: #9a9aa2;
+        --border: #2c2c31; --accent: #6b9bff; --chip: #26272d; --warn: #f0a050;
+        --good: #4cc584; --hl: #1f2a40; --checker: #2a2a2f;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+    .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .back:hover { color: var(--accent); }
+    h1 { margin: 12px 0 4px; font-size: 1.8rem; letter-spacing: -0.02em; }
+    .sub { margin: 0 0 20px; color: var(--muted); }
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    button { font: inherit; cursor: pointer; }
+    .btn {
+      font-size: 0.9rem; padding: 8px 14px; border-radius: 10px;
+      background: transparent; color: var(--accent); border: 1px solid var(--border);
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn:disabled { opacity: .5; cursor: default; }
+
+    /* Drop zone */
+    #drop {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      min-height: 170px; padding: 24px; text-align: center; cursor: pointer;
+      border: 2px dashed var(--border); border-radius: 14px; background: var(--card);
+      transition: border-color .15s, background .15s; margin-bottom: 16px;
+    }
+    #drop:hover, #drop:focus-visible { border-color: var(--accent); outline: none; }
+    body.dragging #drop { border-color: var(--accent); background: var(--hl); }
+    #drop strong { font-size: 1.1rem; }
+    #drop span { color: var(--muted); font-size: 0.9rem; }
+
+    /* Settings */
+    .settings { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 20px; }
+    label, .label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .chips button {
+      font-size: 0.85rem; padding: 6px 12px; border-radius: 999px;
+      background: var(--chip); color: var(--text); border: 1px solid transparent;
+    }
+    .chips button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    .slider { display: flex; align-items: center; gap: 10px; }
+    input[type=range] { flex: 1; accent-color: var(--accent); }
+    .qval { min-width: 2.5em; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    select, input[type=number] {
+      width: 100%; padding: 9px 10px; font: inherit; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    }
+    select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .check { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: var(--text); margin-top: 12px; cursor: pointer; }
+    .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .help { font-size: 0.8rem; color: var(--muted); margin: 6px 0 0; }
+    #customWidth { margin-top: 8px; }
+    .engine { font-size: 0.8rem; color: var(--muted); margin: 14px 0 0; }
+    .engine.bad { color: var(--warn); }
+
+    /* Summary */
+    .summary { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .summary .stats { font-weight: 600; }
+    .summary .stats small { font-weight: 400; color: var(--muted); }
+    .summary .actions { display: flex; gap: 8px; }
+
+    /* Results */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .item {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .thumb {
+      height: 190px; display: flex; align-items: center; justify-content: center; cursor: zoom-in;
+      background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+      border: 0; padding: 0; width: 100%;
+    }
+    .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+    .meta { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dims { font-size: 0.85rem; color: var(--muted); }
+    .sizes { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+    .badge { font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .badge.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+    .badge.bad { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+    .status { font-size: 0.85rem; color: var(--muted); }
+    .status.error, .status.warn { color: var(--warn); }
+    .row-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .row-actions .btn { flex: 1; padding: 7px 10px; }
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; display: inline-block; vertical-align: -2px; margin-right: 6px; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Compare dialog */
+    dialog {
+      width: min(1100px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0;
+      border: 1px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / .6); }
+    .dlg-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .dlg-head .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+    .dlg-tools { display: flex; gap: 12px; align-items: center; }
+    .dlg-tools .check { margin: 0; font-size: 0.9rem; }
+    .stage-wrap {
+      overflow: auto; max-height: calc(100vh - 150px);
+      background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+    }
+    .stage { position: relative; margin: 0 auto; user-select: none; touch-action: none; cursor: ew-resize; }
+    .stage img { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .stage .after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--split, 50%)); }
+    .stage .line { position: absolute; top: 0; bottom: 0; left: var(--split, 50%); width: 2px; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .4); transform: translateX(-1px); pointer-events: none; }
+    .stage .tag { position: absolute; top: 10px; padding: 2px 8px; font-size: 0.8rem; border-radius: 6px; background: rgb(0 0 0 / .65); color: #fff; pointer-events: none; }
+    .stage .tag.l { left: 10px; } .stage .tag.r { right: 10px; }
+    .dlg-foot { padding: 10px 16px; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--border); }
+
+    .hidden { display: none !important; }
+    @media (max-width: 720px) { .settings { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../">← All tools</a>
+    <h1>WebP Converter</h1>
+    <p class="sub">Convert JPG, PNG, GIF, AVIF, BMP, SVG and more to optimized WebP. Everything runs in your browser. Images are never uploaded.</p>
+
+    <div id="drop" role="button" tabindex="0" aria-label="Add images">
+      <strong>Drop images here, click to choose, or paste</strong>
+      <span>Any number of files · transparency is kept</span>
+      <input id="file" type="file" accept="image/*,.svg,.avif,.heic,.heif" multiple hidden>
+    </div>
+
+    <div class="panel">
+      <div class="settings">
+        <div>
+          <span class="label">Preset</span>
+          <div class="chips" id="presets">
+            <button type="button" data-preset="web">Web (recommended)</button>
+            <button type="button" data-preset="high">High quality</button>
+            <button type="button" data-preset="small">Smallest</button>
+            <button type="button" data-preset="lossless">Lossless</button>
+          </div>
+          <label for="quality">Quality</label>
+          <div class="slider">
+            <input id="quality" type="range" min="1" max="100" value="82">
+            <span class="qval" id="qval">82</span>
+          </div>
+          <label class="check"><input id="lossless" type="checkbox"> Lossless (pixel-perfect, bigger files; best for logos and screenshots)</label>
+        </div>
+        <div>
+          <label for="resize">Max width</label>
+          <select id="resize">
+            <option value="0">Keep original size</option>
+            <option value="3840">3840 px (4K)</option>
+            <option value="2560">2560 px</option>
+            <option value="1920">1920 px (full-width hero)</option>
+            <option value="1600">1600 px</option>
+            <option value="1280">1280 px</option>
+            <option value="1024">1024 px</option>
+            <option value="800">800 px (content image)</option>
+            <option value="640">640 px</option>
+            <option value="400">400 px (thumbnail)</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <input id="customWidth" class="hidden" type="number" min="1" max="16383" placeholder="Width in px" aria-label="Custom max width">
+          <p class="help">Images are only ever made smaller, never stretched. Resizing usually saves far more than quality settings.</p>
+        </div>
+        <div>
+          <label for="effort">Compression effort</label>
+          <select id="effort">
+            <option value="6">Best (slower, smallest files)</option>
+            <option value="4">Balanced</option>
+            <option value="2">Fast</option>
+          </select>
+          <label class="check"><input id="sharp" type="checkbox" checked> Sharp color edges</label>
+          <p class="help">Keeps red and blue edges crisp (text, logos, graphics). Slightly slower.</p>
+        </div>
+      </div>
+      <p class="engine" id="engine">Loading encoder…</p>
+    </div>
+
+    <div class="panel summary hidden" id="summary">
+      <div class="stats" id="stats"></div>
+      <div class="actions">
+        <button class="btn" type="button" id="clear">Clear</button>
+        <button class="btn primary" type="button" id="zip">Download all (.zip)</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <dialog id="compare">
+    <div class="dlg-head">
+      <span class="title" id="cmpTitle"></span>
+      <div class="dlg-tools">
+        <label class="check"><input id="actual" type="checkbox"> Actual pixels</label>
+        <button class="btn" type="button" id="cmpClose">Close</button>
+      </div>
+    </div>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage">
+        <img id="cmpBefore" alt="Original">
+        <img id="cmpAfter" class="after" alt="WebP">
+        <div class="line"></div>
+        <span class="tag l" id="tagL">Original</span>
+        <span class="tag r" id="tagR">WebP</span>
+      </div>
+    </div>
+    <div class="dlg-foot">Drag across the image to compare. Turn on "Actual pixels" to inspect fine detail.</div>
+  </dialog>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ---------- Settings ----------
+    const PRESETS = {
+      web: { quality: 82, lossless: false },
+      high: { quality: 92, lossless: false },
+      small: { quality: 65, lossless: false },
+      lossless: { quality: 82, lossless: true },
+    };
+    const PREF_KEY = "webp-settings";
+
+    function getSettings() {
+      let maxW = $("resize").value === "custom" ? parseInt($("customWidth").value, 10) || 0 : +$("resize").value;
+      return {
+        quality: +$("quality").value,
+        lossless: $("lossless").checked,
+        effort: +$("effort").value,
+        sharp: $("sharp").checked,
+        maxW,
+      };
+    }
+
+    function encoderOptions(s) {
+      if (s.lossless) {
+        // In lossless mode libwebp's "quality" means how hard to try. 100 is ~13x slower than 75
+        // for well under 1% smaller files, so "Best" stops at 75.
+        return { lossless: 1, method: s.effort, quality: s.effort >= 6 ? 75 : s.effort >= 4 ? 50 : 25, exact: 0 };
+      }
+      return { quality: s.quality, method: s.effort, use_sharp_yuv: s.sharp ? 1 : 0, alpha_quality: 100 };
+    }
+
+    function syncUi() {
+      const s = getSettings();
+      $("qval").textContent = s.lossless ? "—" : s.quality;
+      $("quality").disabled = s.lossless;
+      $("sharp").disabled = s.lossless;
+      $("customWidth").classList.toggle("hidden", $("resize").value !== "custom");
+      document.querySelectorAll("#presets button").forEach(b => {
+        const p = PRESETS[b.dataset.preset];
+        b.setAttribute("aria-pressed", p.lossless ? s.lossless : (!s.lossless && p.quality === s.quality));
+      });
+    }
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({
+          quality: $("quality").value, lossless: $("lossless").checked, effort: $("effort").value,
+          sharp: $("sharp").checked, resize: $("resize").value, customWidth: $("customWidth").value,
+        }));
+      } catch {}
+    }
+
+    function loadSettings() {
+      try {
+        const p = JSON.parse(localStorage.getItem(PREF_KEY) || "null");
+        if (!p) return;
+        $("quality").value = p.quality; $("lossless").checked = p.lossless; $("effort").value = p.effort;
+        $("sharp").checked = p.sharp; $("resize").value = p.resize; $("customWidth").value = p.customWidth || "";
+      } catch {}
+    }
+
+    // ---------- Encoder (libwebp in a worker, canvas fallback) ----------
+    let worker = null, engine = "loading";
+    const pending = new Map();
+    let jobSeq = 0;
+
+    function startWorker() {
+      return new Promise(resolve => {
+        try {
+          worker = new Worker("worker.js", { type: "module" });
+        } catch { return resolve(false); }
+        const timer = setTimeout(() => resolve(false), 15000);
+        worker.onerror = () => { clearTimeout(timer); resolve(false); };
+        worker.onmessage = ({ data }) => {
+          if (data.type === "ready") { clearTimeout(timer); resolve(true); return; }
+          if (data.type === "unavailable") { clearTimeout(timer); resolve(false); return; }
+          const job = pending.get(data.id);
+          if (!job) return;
+          pending.delete(data.id);
+          data.type === "done" ? job.resolve(new Blob([data.buffer], { type: "image/webp" })) : job.reject(new Error(data.error));
+        };
+        worker.postMessage({ type: "ping" });
+      });
+    }
+
+    function encodeWithLibwebp(imageData, options) {
+      return new Promise((resolve, reject) => {
+        const id = ++jobSeq;
+        pending.set(id, { resolve, reject });
+        const buf = imageData.data.buffer;
+        worker.postMessage({ id, width: imageData.width, height: imageData.height, buffer: buf, options }, [buf]);
+      });
+    }
+
+    function encodeWithCanvas(canvas, s) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(b => {
+          if (b && b.type === "image/webp") resolve(b);
+          else reject(new Error("This browser can't create WebP files. Try Chrome, Edge or Firefox."));
+        }, "image/webp", s.lossless ? 1 : s.quality / 100);
+      });
+    }
+
+    function setEngineText() {
+      const el = $("engine");
+      if (engine === "libwebp") { el.className = "engine"; el.textContent = "Encoder: libwebp (Google's reference WebP encoder), running locally."; }
+      else if (engine === "canvas") { el.className = "engine bad"; el.textContent = "Couldn't load the libwebp encoder, so the browser's built-in WebP encoder is being used. Effort, sharp edges and lossless settings won't apply."; }
+      else { el.className = "engine"; el.textContent = "Loading encoder…"; }
+    }
+
+    // ---------- Decoding + resizing ----------
+    async function decode(file) {
+      try {
+        return await createImageBitmap(file, { imageOrientation: "from-image" });
+      } catch {}
+      // Fallback (SVG and some formats): let an <img> decode it.
+      const url = URL.createObjectURL(file);
+      try {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+        await img.decode();
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { w = 1024; h = 1024; } // SVG with no size set
+        if (/svg/i.test(file.type) || /\.svg$/i.test(file.name)) {
+          // Render vectors at 2x so they stay crisp.
+          const scale = Math.min(2, 8192 / Math.max(w, h));
+          w = Math.round(w * scale); h = Math.round(h * scale);
+        }
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        return await createImageBitmap(c);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    // High-quality downscale: halve step by step, then finish at the exact size.
+    function render(src, maxW) {
+      let w = src.width, h = src.height;
+      const tw = maxW && w > maxW ? maxW : w;
+      const th = Math.max(1, Math.round(h * tw / w));
+      let cur = src, cw = w, ch = h;
+      while (cw / 2 >= tw) {
+        const nw = Math.floor(cw / 2), nh = Math.floor(ch / 2);
+        const c = document.createElement("canvas");
+        c.width = nw; c.height = nh;
+        const ctx = c.getContext("2d");
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(cur, 0, 0, nw, nh);
+        cur = c; cw = nw; ch = nh;
+      }
+      const out = document.createElement("canvas");
+      out.width = tw; out.height = th;
+      const ctx = out.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(cur, 0, 0, tw, th);
+      return out;
+    }
+
+    // ---------- Items ----------
+    const items = [];
+    let itemSeq = 0, generation = 0, queueRunning = false;
+
+    const fmtBytes = n => n < 1000 ? `${n} B` : n < 1e6 ? `${(n / 1000).toFixed(n < 1e4 ? 1 : 0)} KB` : `${(n / 1e6).toFixed(2)} MB`;
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const outName = name => name.replace(/\.[^./\\]+$/, "") + ".webp";
+
+    function addFiles(fileList) {
+      const files = [...fileList].filter(f => f.type.startsWith("image/") || /\.(svg|avif|heic|heif|bmp|ico|tiff?)$/i.test(f.name));
+      for (const file of files) {
+        const item = { id: ++itemSeq, file, name: file.name, origSize: file.size, srcUrl: URL.createObjectURL(file), status: "queued", gen: -1 };
+        items.push(item);
+        $("grid").insertAdjacentHTML("beforeend", `<div class="item" id="item-${item.id}"></div>`);
+        drawItem(item);
+      }
+      if (files.length) runQueue();
+    }
+
+    function drawItem(item) {
+      const el = $(`item-${item.id}`);
+      if (!el) return;
+      const ready = item.status === "done";
+      const diff = ready ? (item.blob.size - item.origSize) / item.origSize : 0;
+      const pct = Math.round(Math.abs(diff) * 100);
+      let status = "";
+      if (item.status === "queued") status = `<span class="status">Waiting…</span>`;
+      else if (item.status === "working") status = `<span class="status"><span class="spinner"></span>Converting…</span>`;
+      else if (item.status === "error") status = `<span class="status error">${esc(item.error)}</span>`;
+      else if (diff >= 0 && /\.svg$/i.test(item.name)) status = `<span class="status warn">SVGs are usually smaller and sharper as SVG. Only use the WebP if a site won't accept SVG.</span>`;
+      else if (diff >= 0) status = `<span class="status warn">The WebP is bigger than the original. It's likely already well optimized: keep the original or lower the quality.</span>`;
+
+      el.innerHTML = `
+        <button class="thumb" type="button" data-act="compare" ${ready ? "" : "disabled"} aria-label="Compare ${esc(item.name)}">
+          ${item.srcW || item.status !== "error" ? `<img src="${ready ? item.outUrl : item.srcUrl}" alt="">` : ""}
+        </button>
+        <div class="meta">
+          <div class="name" title="${esc(item.name)}">${esc(item.name)}</div>
+          ${item.srcW ? `<div class="dims">${item.srcW}×${item.srcH}${ready && item.outW !== item.srcW ? ` → ${item.outW}×${item.outH}` : ""}</div>` : ""}
+          <div class="sizes">
+            <span>${fmtBytes(item.origSize)}${ready ? ` → <strong>${fmtBytes(item.blob.size)}</strong>` : ""}</span>
+            ${ready ? `<span class="badge ${diff < 0 ? "good" : "bad"}">${diff < 0 ? "−" : "+"}${pct}%</span>` : ""}
+          </div>
+          ${status}
+          <div class="row-actions">
+            <button class="btn" type="button" data-act="remove">Remove</button>
+            <button class="btn primary" type="button" data-act="download" ${ready ? "" : "disabled"}>Download</button>
+          </div>
+        </div>`;
+    }
+
+    function drawSummary() {
+      const done = items.filter(i => i.status === "done");
+      $("summary").classList.toggle("hidden", !items.length);
+      $("zip").disabled = !done.length;
+      const busy = items.some(i => i.status === "queued" || i.status === "working");
+      if (!done.length) { $("stats").innerHTML = busy ? "Converting…" : ""; return; }
+      const before = done.reduce((a, i) => a + i.origSize, 0), after = done.reduce((a, i) => a + i.blob.size, 0);
+      const saved = Math.round((1 - after / before) * 100);
+      $("stats").innerHTML = `${done.length} image${done.length === 1 ? "" : "s"}: ${fmtBytes(before)} → ${fmtBytes(after)} ` +
+        `<small>(${saved >= 0 ? `${saved}% smaller` : `${-saved}% bigger`})${busy ? " · still converting…" : ""}</small>`;
+    }
+
+    async function processItem(item, gen) {
+      const s = getSettings();
+      item.status = "working"; drawItem(item); drawSummary();
+      try {
+        if (!item.bitmap) {
+          try { item.bitmap = await decode(item.file); }
+          catch { throw new Error(/\.(heic|heif)$/i.test(item.name) ? "This browser can't read HEIC photos. Open it in Safari, or export it as JPG first." : /\.tiff?$/i.test(item.name) ? "This browser can't read TIFF files. Try Safari, or export it as PNG first." : "Couldn't read this image."); }
+          item.srcW = item.bitmap.width; item.srcH = item.bitmap.height;
+        }
+        const canvas = render(item.bitmap, s.maxW);
+        let blob;
+        if (engine === "libwebp") {
+          const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+          blob = await encodeWithLibwebp(data, encoderOptions(s));
+        } else {
+          blob = await encodeWithCanvas(canvas, s);
+        }
+        if (gen !== generation) return; // settings changed mid-way; a newer pass will redo it
+        if (item.outUrl) URL.revokeObjectURL(item.outUrl);
+        Object.assign(item, { blob, outUrl: URL.createObjectURL(blob), outW: canvas.width, outH: canvas.height, status: "done", gen });
+      } catch (e) {
+        if (gen !== generation) return;
+        Object.assign(item, { status: "error", error: e.message || "Conversion failed.", gen });
+      }
+      drawItem(item); drawSummary();
+    }
+
+    async function runQueue() {
+      if (queueRunning || engine === "loading") return;
+      queueRunning = true;
+      try {
+        let next;
+        while ((next = items.find(i => i.gen !== generation && i.status !== "removed"))) {
+          const gen = generation;
+          await processItem(next, gen);
+          if (next.gen !== generation && next.status === "working") next.status = "queued";
+        }
+      } finally {
+        queueRunning = false;
+        drawSummary();
+      }
+    }
+
+    let settingsTimer;
+    function settingsChanged() {
+      syncUi(); saveSettings();
+      clearTimeout(settingsTimer);
+      settingsTimer = setTimeout(() => {
+        generation++;
+        items.forEach(i => { if (i.status === "done" || i.status === "error") { i.status = "queued"; drawItem(i); } });
+        runQueue();
+      }, 350);
+    }
+
+    function download(blob, name) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
+
+    async function downloadZip() {
+      const done = items.filter(i => i.status === "done");
+      if (!done.length) return;
+      if (done.length === 1) return download(done[0].blob, outName(done[0].name));
+      $("zip").disabled = true; $("zip").textContent = "Zipping…";
+      try {
+        const zip = new JSZip(), used = new Set();
+        for (const i of done) {
+          let n = outName(i.name), k = 1;
+          while (used.has(n.toLowerCase())) n = outName(i.name).replace(/\.webp$/, `-${++k}.webp`);
+          used.add(n.toLowerCase());
+          zip.file(n, i.blob);
+        }
+        download(await zip.generateAsync({ type: "blob", compression: "STORE" }), "webp-images.zip");
+      } finally {
+        $("zip").disabled = false; $("zip").textContent = "Download all (.zip)";
+      }
+    }
+
+    function removeItem(item) {
+      item.status = "removed";
+      if (item.srcUrl) URL.revokeObjectURL(item.srcUrl);
+      if (item.outUrl) URL.revokeObjectURL(item.outUrl);
+      if (item.bitmap && item.bitmap.close) item.bitmap.close();
+      items.splice(items.indexOf(item), 1);
+      $(`item-${item.id}`)?.remove();
+      drawSummary();
+    }
+
+    // ---------- Compare dialog ----------
+    function openCompare(item) {
+      $("cmpTitle").textContent = `${item.name}: ${fmtBytes(item.origSize)} → ${fmtBytes(item.blob.size)}`;
+      $("cmpBefore").src = item.srcUrl;
+      $("cmpAfter").src = item.outUrl;
+      $("tagR").textContent = `WebP · ${fmtBytes(item.blob.size)}`;
+      $("tagL").textContent = `Original · ${fmtBytes(item.origSize)}`;
+      $("compare").dataset.w = item.outW; $("compare").dataset.h = item.outH;
+      $("stage").style.setProperty("--split", "50%");
+      $("compare").showModal();
+      sizeStage();
+    }
+    function sizeStage() {
+      const w = +$("compare").dataset.w, h = +$("compare").dataset.h;
+      if (!w) return;
+      let dw = w, dh = h;
+      if (!$("actual").checked) {
+        const maxW = $("stageWrap").clientWidth || Math.min(1100, window.innerWidth - 34), maxH = window.innerHeight - 160;
+        const k = Math.min(1, maxW / w, maxH / h);
+        dw = Math.round(w * k); dh = Math.round(h * k);
+      }
+      $("stage").style.width = dw + "px"; $("stage").style.height = dh + "px";
+    }
+    function moveSplit(e) {
+      const r = $("stage").getBoundingClientRect();
+      const x = Math.min(Math.max(e.clientX - r.left, 0), r.width);
+      $("stage").style.setProperty("--split", (x / r.width * 100) + "%");
+    }
+    let dragging = false;
+    $("stage").addEventListener("pointerdown", e => { dragging = true; $("stage").setPointerCapture(e.pointerId); moveSplit(e); });
+    $("stage").addEventListener("pointermove", e => { if (dragging || e.pointerType === "mouse") moveSplit(e); });
+    $("stage").addEventListener("pointerup", () => { dragging = false; });
+    $("actual").addEventListener("change", sizeStage);
+    window.addEventListener("resize", sizeStage);
+    $("cmpClose").addEventListener("click", () => $("compare").close());
+    $("compare").addEventListener("click", e => { if (e.target === $("compare")) $("compare").close(); });
+
+    // ---------- Events ----------
+    $("drop").addEventListener("click", () => $("file").click());
+    $("drop").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } });
+    $("file").addEventListener("change", e => { addFiles(e.target.files); e.target.value = ""; });
+
+    let dragDepth = 0;
+    document.addEventListener("dragenter", e => { if ([...e.dataTransfer.types].includes("Files")) { dragDepth++; document.body.classList.add("dragging"); } });
+    document.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => {
+      e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging");
+      if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+    });
+    document.addEventListener("paste", e => {
+      const files = [...(e.clipboardData?.items || [])].filter(i => i.kind === "file").map(i => i.getAsFile()).filter(Boolean)
+        .map((f, n) => f.name && f.name !== "image.png" ? f : new File([f], `pasted-${Date.now()}-${n}.${(f.type.split("/")[1] || "png").replace("jpeg", "jpg")}`, { type: f.type }));
+      if (files.length) addFiles(files);
+    });
+
+    $("grid").addEventListener("click", e => {
+      const btn = e.target.closest("[data-act]"); if (!btn) return;
+      const item = items.find(i => `item-${i.id}` === btn.closest(".item").id); if (!item) return;
+      if (btn.dataset.act === "download" && item.blob) download(item.blob, outName(item.name));
+      if (btn.dataset.act === "compare" && item.blob) openCompare(item);
+      if (btn.dataset.act === "remove") removeItem(item);
+    });
+
+    $("presets").addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      const p = PRESETS[b.dataset.preset];
+      $("lossless").checked = p.lossless;
+      if (!p.lossless) $("quality").value = p.quality;
+      settingsChanged();
+    });
+    $("quality").addEventListener("input", settingsChanged);
+    ["lossless", "effort", "sharp", "resize", "customWidth"].forEach(id => $(id).addEventListener(id === "customWidth" ? "input" : "change", settingsChanged));
+    $("zip").addEventListener("click", downloadZip);
+    $("clear").addEventListener("click", () => [...items].forEach(removeItem));
+
+    // ---------- Start ----------
+    loadSettings();
+    syncUi();
+    setEngineText();
+    startWorker().then(ok => {
+      engine = ok ? "libwebp" : "canvas";
+      setEngineText();
+      runQueue();
+    });
+  </script>
+</body>
+</html>

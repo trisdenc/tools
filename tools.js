@@ -4,6 +4,7 @@
 const TOOLS = [
   { name: "Time Zone Finder", url: "timezone/", category: "My Tools", icon: "🕒", description: "Convert a time in another zone to your local time.", tags: ["time", "timezone", "convert"] },
   { name: "Unit Converter", url: "units/", category: "My Tools", icon: "📏", description: "Length, weight, volume, temperature, data and more. Type \"5 ft to cm\".", tags: ["convert", "metric", "imperial", "bytes", "measurement"] },
+  { name: "WebP Converter", url: "webp/", category: "My Tools", icon: "🖼️", description: "Convert any image to optimized WebP for websites. Runs in your browser.", tags: ["image", "webp", "compress", "optimize", "png", "jpg"] },
   { name: "GitHub", url: "https://github.com", category: "Development", description: "Code hosting and collaboration.", tags: ["git", "code"] },
   { name: "Regex101", url: "https://regex101.com", category: "Development", description: "Build and test regular expressions.", tags: ["regex"] },
   { name: "JSON Formatter", url: "https://jsonformatter.org", category: "Development", description: "Format and validate JSON.", tags: ["json"] },
