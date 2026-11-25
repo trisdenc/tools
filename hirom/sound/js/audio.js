@@ -3,6 +3,7 @@
 
 import { Engine } from "./engine.js";
 import { DSP_RATE } from "./dsp.js";
+import { APP } from "./project.js";
 
 async function buildWorkletUrl() {
   const parts = await Promise.all(["dsp.js", "engine.js", "processor.js"].map(f =>
@@ -37,7 +38,7 @@ export class Audio {
       if (this.ctx.state === "suspended") await this.ctx.resume();
       const url = await buildWorkletUrl();
       await this.ctx.audioWorklet.addModule(url);
-      this.node = new AudioWorkletNode(this.ctx, "snes-dsp", { numberOfInputs: 0, outputChannelCount: [2] });
+      this.node = new AudioWorkletNode(this.ctx, "hirom-sound-dsp", { numberOfInputs: 0, outputChannelCount: [2] });
       this.node.connect(this.ctx.destination);
       this.node.port.onmessage = e => { if (e.data.type === "meters" && this.onMeters) this.onMeters(e.data); };
       this.ready = true;
@@ -225,14 +226,28 @@ export function resampleInt16(src, fromRate, toRate) {
   return out;
 }
 
+// RIFF LIST/INFO chunk tagging the file with the software that made it.
+function infoChunk() {
+  const text = `${APP.name} ${APP.version} (${APP.suite})`;
+  const strLen = text.length + 1 + ((text.length + 1) & 1); // NUL-terminated, even length
+  const size = 4 + 8 + strLen;
+  const b = new Uint8Array(8 + size);
+  const put = (o, s) => { for (let i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i) & 0x7F; };
+  const v = new DataView(b.buffer);
+  put(0, "LIST"); v.setUint32(4, size, true); put(8, "INFO");
+  put(12, "ISFT"); v.setUint32(16, strLen, true); put(20, text);
+  return b;
+}
+
 // 16-bit stereo WAV with an optional `smpl` loop chunk (read by Unity, Godot, FMOD, Wwise…).
 export function wavBlob(L, R, rate, loop = null) {
   const frames = L.length, dataBytes = frames * 4;
   const smplBytes = loop ? 8 + 36 + 24 : 0;
-  const buf = new ArrayBuffer(44 + dataBytes + smplBytes);
+  const info = infoChunk();
+  const buf = new ArrayBuffer(44 + dataBytes + smplBytes + info.length);
   const v = new DataView(buf);
   const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-  w(0, "RIFF"); v.setUint32(4, 36 + dataBytes + smplBytes, true); w(8, "WAVE");
+  w(0, "RIFF"); v.setUint32(4, 36 + dataBytes + smplBytes + info.length, true); w(8, "WAVE");
   w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true);
   v.setUint32(24, rate, true); v.setUint32(28, rate * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true);
   w(36, "data"); v.setUint32(40, dataBytes, true);
@@ -255,7 +270,9 @@ export function wavBlob(L, R, rate, loop = null) {
     v.setUint32(b + 48, loop.end, true);
     v.setUint32(b + 52, 0, true);                        // fraction
     v.setUint32(b + 56, 0, true);                        // play count: infinite
+    o += 8 + 36 + 24;
   }
+  new Uint8Array(buf, o, info.length).set(info);
   return new Blob([buf], { type: "audio/wav" });
 }
 

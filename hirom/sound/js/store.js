@@ -276,6 +276,7 @@ export function newPattern(kind = "music", name) {
 }
 
 // ---------- Persistence (IndexedDB) ----------
+// Storage name kept from the first release so existing saved projects still load.
 const DB_NAME = "snes-studio", STORE = "kv";
 let dbPromise = null;
 const dirtySources = new Set();

@@ -50,4 +50,4 @@ function hermite(xm1, x0, x1, x2, t) {
   return ((c3 * t + c2) * t + c1) * t + x0;
 }
 
-registerProcessor("snes-dsp", SnesProcessor);
+registerProcessor("hirom-sound-dsp", SnesProcessor);

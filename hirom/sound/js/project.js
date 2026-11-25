@@ -3,6 +3,7 @@
 
 import { DEFAULT_PARAMS } from "./brr.js";
 
+export const APP = { name: "HiROM Sound", suite: "HiROM Studio", version: "1.0.0" };
 export const SCHEMA_VERSION = "1.0.0";
 export const ARAM_LIMIT = 65536;
 export const DRIVER_BYTES = 4096;
@@ -423,8 +424,9 @@ export function fromBase64(str) {
 
 // Project JSON in the shared schema. `brrFor(id)` returns the sample's BRR bytes.
 export function exportProjectJson(project, brrFor, { embedBrr = true } = {}) {
-  const out = JSON.parse(JSON.stringify(project));
+  const out = { schemaVersion: SCHEMA_VERSION, generator: `${APP.name} ${APP.version}`, ...JSON.parse(JSON.stringify(project)) };
   out.schemaVersion = SCHEMA_VERSION;
+  out.generator = `${APP.name} ${APP.version}`;
   out.samples = out.samples.map(s => {
     const b = brrFor(s.id);
     const entry = { ...s, byteLength: b ? b.length : 0 };

@@ -97,7 +97,7 @@
           <div class="grid">
             ${tools.map(t => `
               <a class="card" href="${esc(t.url)}"${isExternal(t.url) ? ' target="_blank" rel="noopener"' : ""}>
-                ${t.icon ? `<span class="icon" aria-hidden="true">${esc(t.icon)}</span>` : `<img src="${favicon(t.url)}" alt="" loading="lazy">`}
+                ${t.image ? `<img src="${esc(t.image)}" alt="" loading="lazy">` : t.icon ? `<span class="icon" aria-hidden="true">${esc(t.icon)}</span>` : `<img src="${favicon(t.url)}" alt="" loading="lazy">`}
                 <div><strong>${esc(t.name)}</strong><span>${esc(t.description)}</span></div>
               </a>`).join("")}
           </div>

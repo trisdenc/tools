@@ -1,0 +1,31 @@
+/* HiROM Studio brand: shared by every HiROM app. Load after the app's own stylesheet. */
+:root {
+  --brand: #6c47ff;
+  --brand-strong: #4f24d8;
+  --accent: #6c47ff;
+  --accent-text: #ffffff;
+  --hl: #f1edff;
+  --cursor: rgba(108, 71, 255, .16);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: #a28cff;
+    --brand-strong: #8c6dff;
+    --accent: #a28cff;
+    --accent-text: #150e33;
+    --hl: #231d3f;
+    --cursor: rgba(162, 140, 255, .22);
+  }
+}
+
+.hirom-lockup {
+  display: inline-flex; align-items: center; gap: 9px;
+  color: inherit; text-decoration: none;
+}
+.hirom-lockup img { width: 28px; height: 28px; display: block; flex: none; }
+.hirom-lockup .names { display: flex; flex-direction: column; line-height: 1.05; }
+.hirom-lockup .suite {
+  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
+}
+.hirom-word { font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+.hirom-word .sub { font-weight: 600; color: var(--brand); }

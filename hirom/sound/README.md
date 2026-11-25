@@ -1,7 +1,8 @@
 # HiROM Sound
 
 Part of the **HiROM Studio** suite. A browser DAW for writing SNES-style music and sound effects that sound like the
-real S-DSP, not a generic chiptune sampler. Live at `/tools/snes/`.
+real S-DSP, not a generic chiptune sampler. Live at `/tools/hirom/sound/` (the old
+`/tools/snes/` address forwards here). Brand assets live in `../brand/`.
 
 ## What's accurate
 
@@ -37,7 +38,7 @@ and in offline export.
 ## Tests
 
 ```
-cd snes
+cd hirom/sound
 node --test
 ```
 

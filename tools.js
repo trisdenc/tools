@@ -1,11 +1,13 @@
 // Add, remove or edit your tools here. Each tool needs a name, url and category.
-// description, tags and icon (an emoji, used instead of the site's favicon) are optional.
+// description, tags, icon (an emoji) and image (a path to an icon file) are optional;
+// without either, the site's favicon is used.
 // Relative urls like "timezone/" point to tools built in this repo.
 const TOOLS = [
   { name: "Time Zone Finder", url: "timezone/", category: "My Tools", icon: "🕒", description: "Convert a time in another zone to your local time.", tags: ["time", "timezone", "convert"] },
   { name: "Unit Converter", url: "units/", category: "My Tools", icon: "📏", description: "Length, weight, volume, temperature, data and more. Type \"5 ft to cm\".", tags: ["convert", "metric", "imperial", "bytes", "measurement"] },
   { name: "WebP Converter", url: "webp/", category: "My Tools", icon: "🖼️", description: "Convert any image to optimized WebP for websites. Runs in your browser.", tags: ["image", "webp", "compress", "optimize", "png", "jpg"] },
-  { name: "HiROM Sound", url: "snes/", category: "My Tools", icon: "🎮", description: "HiROM Studio: compose SNES music and sound effects with an accurate S-DSP engine.", tags: ["music", "audio", "snes", "chiptune", "sfx", "tracker", "brr"] },
+  { name: "HiROM Studio", url: "hirom/", category: "HiROM Studio", image: "hirom/brand/mark.svg", description: "Home of the HiROM Studio apps for making SNES music and games.", tags: ["snes", "hirom", "suite"] },
+  { name: "HiROM Sound", url: "hirom/sound/", category: "HiROM Studio", image: "hirom/brand/sound.svg", description: "Compose SNES music and sound effects with an accurate S-DSP engine.", tags: ["music", "audio", "snes", "chiptune", "sfx", "tracker", "brr", "hirom"] },
   { name: "GitHub", url: "https://github.com", category: "Development", description: "Code hosting and collaboration.", tags: ["git", "code"] },
   { name: "Regex101", url: "https://regex101.com", category: "Development", description: "Build and test regular expressions.", tags: ["regex"] },
   { name: "JSON Formatter", url: "https://jsonformatter.org", category: "Development", description: "Format and validate JSON.", tags: ["json"] },

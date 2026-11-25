@@ -5,7 +5,7 @@ import {
   engineSample, saveNow, markAllSourcesDirty, sampleMeta,
 } from "../store.js";
 import { Audio, renderSong, renderSfx, toWav } from "../audio.js";
-import { demoProject, blankProject, exportProjectJson, floatToWav, wavToFloat, fromBase64, ARAM_LIMIT, CHANNELS } from "../project.js";
+import { demoProject, blankProject, exportProjectJson, floatToWav, wavToFloat, fromBase64, ARAM_LIMIT, CHANNELS, APP } from "../project.js";
 import { h, $, toast, download, NOTE_KEYS, isTyping, fmtBytes } from "./util.js";
 import { createSongView } from "./song.js";
 import { createInstrumentsView } from "./instruments.js";
@@ -233,6 +233,7 @@ menu.addEventListener("click", e => {
     sfxpack: exportSfxPack,
     midi: connectMidi,
     help: () => $("#helpDialog").showModal(),
+    about: () => { $("#aboutVersion").textContent = APP.version; $("#aboutDialog").showModal(); },
   })[act]?.();
 });
 document.addEventListener("click", e => { if (menu.open && !menu.contains(e.target)) menu.open = false; });
@@ -427,4 +428,4 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 })();
 
 // Debug/test hook
-window.snesStudio = { state, audio, views, sampleMeta, openFile, projectZipBlob };
+window.hiromSound = { app: APP, state, audio, views, sampleMeta, openFile, projectZipBlob };
